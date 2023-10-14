@@ -6,6 +6,8 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const ApiError = require("../api-error");
 const { ObjectId } = require("mongodb");
+const path = require("path");
+const fs = require("fs");
 
 exports.create = async (req, res, next) => {
   if (!req.body?.email) {
@@ -76,6 +78,53 @@ exports.logout = async (req, res, next) => {
     return res.send({ message: "Logout success" });
   } catch (error) {
     return next(new ApiError(500, "logout fail"));
+  }
+};
+
+exports.changeImage = async (req, res, next) => {
+  // console.log("tới đây: change image", req.body.image);
+  const service_id = req.service.id;
+  try {
+    const serviceProvider = new ServiceProvider(MongoDB.client);
+    const service = await serviceProvider.findById(service_id);
+
+    let oldImage = null;
+    let imageReal = null;
+    if (service.image) {
+      oldImage = service.image;
+    }
+
+    if (req.file) {
+      if (oldImage) {
+        const imagePath = path.join(__dirname, "../../public/images");
+        const oldImagePath = path.join(imagePath, oldImage);
+        fs.unlinkSync(oldImagePath); // Xóa ảnh cũ
+      }
+      const imagePath = path.join(__dirname, "../../public/images");
+      const stringDate = new Date().getTime();
+      const filename = stringDate + "_" + req.file.originalname;
+
+      const buffer = fs.readFileSync(req.file.path);
+      fs.writeFile(`${imagePath}/${filename}`, buffer, function (err) {
+        if (err) {
+          return console.error(err);
+        }
+        console.log("File saved!");
+      });
+
+      imageReal = filename;
+    } else {
+      imageReal = oldImage;
+    }
+
+    const document = await serviceProvider.changeImage(service_id, imageReal);
+
+    if (!document) {
+      return next(new ApiError(404, "service not found!"));
+    }
+    return res.send({ message: "Change image successfully!" });
+  } catch (error) {
+    return next(new ApiError(500, `Error change image service !`));
   }
 };
 

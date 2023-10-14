@@ -3,8 +3,10 @@ const MongoDB = require("../utils/mongodb.util");
 const ApiError = require("../api-error");
 const ServiceProvider = require("../services/serviceProvider");
 const FoodService = require("../services/food.service");
+const OtherService = require("../services/other.service");
 const UserService = require("../services/user.service");
 const { ObjectId } = require("mongodb");
+
 //STATUS == 0 => new order
 //STATUS == 1 => order accept
 //STATUS == 2 => order cancel bt admin
@@ -16,7 +18,7 @@ const nodemailer = require("nodemailer");
 const checkUser = require("../middlewares/check_user");
 const DrinkService = require("../services/drink.service");
 // Hàm để gửi email
-const sendEmail = async (toEmail, subject, text, orderId) => {
+const sendEmail = async (toEmail, subject, text) => {
   try {
     // Tạo một transporter (cấu hình tài khoản email gửi)
     const transporter = nodemailer.createTransport({
@@ -27,22 +29,14 @@ const sendEmail = async (toEmail, subject, text, orderId) => {
       },
     });
 
-    console.log(toEmail, subject, text);
-
     // Thông tin email
     const mailOptions = {
       from: "huutintin1312@gmail.com", // Email nguồn
       to: toEmail, // Email đích
       subject: subject, // Tiêu đề email
       html: `
-        <p>${text}</p>
-        <p>Order ID: 123</p>
-        <a href="http://localhost:3000/api/user_orders/cancel/${toEmail}/${orderId}">Hủy Hủy</a>
-        <form id="cancelOrderForm" action="http://localhost:3000/api/user_orders/cancel/${toEmail}/${orderId}" method="POST">
-  <input type="hidden" name="orderId" value="${orderId}">
-  <button type="submit">Hủy đơn hàng</button>
-    </form>
-      `, // Nội dung email (dạng HTML) with a Cancel Order button
+        <div>${text}</div>
+      `,
     };
 
     // Gửi email
@@ -53,50 +47,169 @@ const sendEmail = async (toEmail, subject, text, orderId) => {
     console.error("Error sending email:", error);
   }
 };
+function formatDateTime(dateTimeStr) {
+  const date = new Date(dateTimeStr);
 
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const year = date.getFullYear();
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const seconds = date.getSeconds().toString().padStart(2, "0");
+
+  return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+}
+function formatDate(inputDateStr) {
+  const parts = inputDateStr.split("-");
+  if (parts.length === 3) {
+    const year = parts[0];
+    const month = parts[1];
+    const day = parts[2];
+    return `${day}/${month}/${year}`;
+  }
+  // Trả về chuỗi gốc nếu đầu vào không hợp lệ
+  return inputDateStr;
+}
 exports.acceptOrder = async (req, res, next) => {
   try {
-    orderId = req.params.orderId;
+    const orderId = req.params.orderId;
     const orderService = new OrderService(MongoDB.client);
     const serviceProvider = new ServiceProvider(MongoDB.client);
-    order = await orderService.findById(orderId);
+    const order = await orderService.findById(orderId);
     service = await serviceProvider.findById(order.service_id);
     orderService.acceptOrder(orderId);
-    console.log("orderrrrr", order);
+    const formattedCreateAt = formatDateTime(order.createAt);
+    const formattedEventDate = formatDate(order.event_date);
     Title = "Email xác nhận đặt tiệc";
+    let content =
+      "Bạn vừa đặt tiệc thành công từ: " +
+      "<b>" +
+      service.service_name +
+      "</b>" +
+      "<br>" +
+      "<b>THÔNG TIN DỊCH VỤ</b> <br>" +
+      "<b>Email:</b> " +
+      service.email +
+      "<br>" +
+      "<b>Số điện thoại:</b> " +
+      service.phone +
+      "<br>" +
+      "<b>Địa chỉ:</b> " +
+      service.address +
+      "<br>" +
+      "<b>THÔNG TIN ĐẶT TIỆC</b>" +
+      "<br>" +
+      "<b>Khách hàng:</b> " +
+      order.fullname +
+      "<br>" +
+      "<b>Số điện thoại:</b> " +
+      order.phone +
+      "<br>" +
+      "<b>Địa chỉ tiệc: </b>" +
+      order.address +
+      "<br>" +
+      "<b>Ngày thực hiện:</b> " +
+      formattedCreateAt +
+      "<br>" +
+      "<b>Ngày diễn ra:</b> " +
+      formattedEventDate +
+      "<b> Vào lúc: </b>" +
+      order.event_time +
+      "<br>";
+    let menuContent = `
+  <h3>Thực đơn</h3>
+  <table border="1">
+    <tr>
+      <th>Số thứ tự</th>
+      <th>Tên món ăn</th>
+      <th>Giá</th>
+    </tr>
+`;
 
-    let menuContent = "Menu của bạn:\n";
     order.cart[0].menu.forEach((menuItem, index) => {
-      menuContent += `${index + 1}. ${menuItem.food_name}: ${
-        menuItem.price
-      } VND\n`;
+      menuContent += `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${menuItem.food_name}</td>
+          <td>${menuItem.price} VND</td>
+        </tr>
+      `;
     });
-    menuContent += `Tổng tiền Menu: ${order.cart[0].totalMenu} VND/Bàn\n`;
-    console.log("Menu ", menuContent);
-    if (order.cart[1].drink) {
-      let drinkContent = "Đồ uống của bạn:\n";
+
+    menuContent += `
+    <tr>
+      <td colspan="2">Tổng tiền thực đơn:</td>
+      <td>${order.cart[0].totalMenu} VND/Bàn</td>
+    </tr>
+    </table>
+    `;
+    content += menuContent + "<br>";
+    if (order.cart[1].drink.length > 0) {
+      let drinkContent = "<h3>Đồ uống</h3><table border='1'>";
       order.cart[1].drink.forEach((drinkItem, index) => {
-        drinkContent += `${index + 1}. ${drinkItem.drink_name} - Số lượng: ${
-          drinkItem.quantity
-        } - Giá:${drinkItem.price} VND\n`;
+        drinkContent += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${drinkItem.drink_name}</td>
+            <td>Số lượng: ${drinkItem.quantity}</td>
+            <td>Giá: ${drinkItem.price} VND</td>
+          </tr>
+        `;
       });
-      drinkContent += `Tổng tiền đồ uống: ${order.cart[1].totalDrink} VND\n`;
-      console.log("Drink", drinkContent);
+      drinkContent += `
+        <tr>
+          <td colspan='3'>Tổng tiền đồ uống:</td>
+          <td>${order.cart[1].totalDrink} VND</td>
+        </tr>
+      </table>`;
+      // console.log("Drink", drinkContent);
+      content += drinkContent + "<br>";
     }
-    if (order.cart[2].other) {
-      let otherContent = "Khác:\n";
+
+    if (order.cart[2].other.length > 0) {
+      let otherContent = "<h3>Khác:</h3><table border='1'>";
       order.cart[2].other.forEach((otherItem, index) => {
-        otherContent += `${index + 1}. ${otherItem.other_name}  - Giá:${
-          otherItem.price
-        } VND\n`;
+        otherContent += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${otherItem.other_name}</td>
+            <td>Giá: ${otherItem.price} VND</td>
+          </tr>
+        `;
       });
-      otherContent += `Tổng tiền: ${order.cart[2].totalOther} VND\n`;
-      console.log("other", otherContent);
+      otherContent += `
+        <tr>
+          <td colspan='2'>Tổng tiền:</td>
+          <td>${order.cart[2].totalOther} VND</td>
+        </tr>
+      </table>`;
+      // console.log("Other", otherContent);
+      content += otherContent + "<br>";
     }
+    const totalOrder =
+      parseInt(order.cart[0].totalMenu) * parseInt(order.tray_quantity) +
+      parseInt(order.cart[1].totalDrink) +
+      parseInt(order.cart[2].totalOther);
+    const formattedTotalOrder = totalOrder.toLocaleString("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    });
+    content +=
+      "<b>Số lượng bàn: </b>" +
+      order.tray_quantity +
+      "<br>" +
+      "Tổng tiền theo đơn đặt tiệc của bạn: " +
+      formattedTotalOrder +
+      "<br>" +
+      "Cảm ơn bạn đã sử dụng dịch vụ." +
+      "<br>" +
+      "Bạn có thể hủy yêu cầu đặt tiệc trong vòng 24h" +
+      "<br>" +
+      ` <button style="background-color: #FF0000; color: white; padding: 5px 10px; border: none; cursor: pointer;">
+    <a href="http://localhost:3001/notification/${orderId}" style="text-decoration: none; color: white;">Hủy</a>
+  </button>`;
 
-    // Content = service.service_name + "hân hạnh phục vụ khách hàng.";
-
-    sendEmail("tinb1910157@student.ctu.edu.vn", "Hello", menuContent, orderId);
+    sendEmail("tinb1910157@student.ctu.edu.vn", "Hello", content);
     return res.send("Accept order successful");
   } catch (error) {}
 };
@@ -236,6 +349,19 @@ exports.findOneOrderOfService = async (req, res, next) => {
   }
 };
 
+exports.findOneOrder = async (req, res, next) => {
+  try {
+    const orderId = req.params.orderId;
+    const orderService = new OrderService(MongoDB.client);
+
+    const order = await orderService.findById(orderId);
+
+    return res.send(order);
+  } catch (error) {
+    return next(new ApiError(500, "Error find  order"));
+  }
+};
+
 //UPDATE ORDER
 
 exports.findFoodNotInOrder = async (req, res, next) => {
@@ -251,6 +377,64 @@ exports.findFoodNotInOrder = async (req, res, next) => {
     console.log("order", order.cart[0].menu);
     for (const food of allFood) {
       const isInMenu = order.cart[0].menu.some(
+        (menuItem) => String(menuItem._id) === String(food._id)
+      );
+
+      if (!isInMenu) {
+        foodNotInOrder.push(food);
+      }
+    }
+
+    return res.send(foodNotInOrder);
+  } catch (error) {
+    return next(
+      new ApiError(500, `An error get All food not in one menu! ${error}`)
+    );
+  }
+};
+
+exports.findDrinkNotInOrder = async (req, res, next) => {
+  service_id = req.service.id;
+  orderId = req.params.orderId;
+  try {
+    const drinkService = new DrinkService(MongoDB.client);
+    allDrink = await drinkService.findAllDrinkOfService(service_id);
+    const orderService = new OrderService(MongoDB.client);
+    const order = await orderService.findById(orderId);
+
+    const foodNotInOrder = [];
+
+    for (const food of allDrink) {
+      const isInMenu = order.cart[1].drink.some(
+        (menuItem) => String(menuItem._id) === String(food._id)
+      );
+
+      if (!isInMenu) {
+        foodNotInOrder.push(food);
+      }
+    }
+
+    return res.send(foodNotInOrder);
+  } catch (error) {
+    return next(
+      new ApiError(500, `An error get All food not in one menu! ${error}`)
+    );
+  }
+};
+
+exports.findOtherNotInOrder = async (req, res, next) => {
+  service_id = req.service.id;
+  orderId = req.params.orderId;
+  try {
+    const otherService = new OtherService(MongoDB.client);
+    allOther = await otherService.findAllOtherOfService(service_id);
+    const orderService = new OrderService(MongoDB.client);
+    const order = await orderService.findById(orderId);
+
+    const foodNotInOrder = [];
+    console.log("other", order.cart[2].other);
+    for (const food of allOther) {
+      const isInMenu = order.cart[2].other.some(
         (menuItem) => String(menuItem._id) === String(food._id)
       );
 
@@ -335,7 +519,47 @@ exports.addFoodToCartInOrder = async (req, res, next) => {
     );
   }
 };
+
+//add to field menu in my cart
+exports.addOtherToCartInOrder = async (req, res, next) => {
+  const service_id = req.service.id;
+  const orderId = req.params.orderId;
+  const otherId = req.params.otherId;
+  try {
+    const orderService = new OrderService(MongoDB.client);
+    const order = await orderService.findById(orderId);
+    const otherService = new OtherService(MongoDB.client);
+    const other = await otherService.findById(otherId);
+    const existingFood = order.cart[2].other.find(
+      (food) => food._id.toString() === otherId
+    );
+
+    if (existingFood) {
+      console.log("Food was exist in my cart");
+    } else {
+      order.cart[2].other.push(other);
+    }
+
+    order.cart[2].totalOther = updateOtherTotal(order.cart[2].other);
+    const document = await orderService.updateCartInOrder(orderId, order.cart);
+
+    return res.send({ foodId: order.cart });
+  } catch (error) {
+    return next(
+      new ApiError(500, `An error occurred while creating the menu! ${error}`)
+    );
+  }
+};
+
 function updateFoodTotal(menu) {
+  let total = 0;
+  for (const food of menu) {
+    total += food.price;
+  }
+  return total;
+}
+
+function updateOtherTotal(menu) {
   let total = 0;
   for (const food of menu) {
     total += food.price;
@@ -393,6 +617,31 @@ exports.removeDrinkInOrder = async (req, res, next) => {
 
     const document = await orderService.updateCartInOrder(orderId, order.cart);
     return res.send("Xóa món ăn thành công khỏi menu trong order");
+  } catch (error) {
+    return next(
+      new ApiError(
+        500,
+        `An error occurred while deleting the food from the menu! ${error}`
+      )
+    );
+  }
+};
+exports.removeOtherInOrder = async (req, res, next) => {
+  const otherId = req.params.otherId;
+  const service_id = req.service.id;
+  const orderId = req.params.orderId;
+
+  try {
+    const orderService = new OrderService(MongoDB.client);
+    const order = await orderService.findById(orderId);
+    order.cart[2].other = order.cart[2].other.filter(
+      (food) => String(food._id) !== String(otherId)
+    );
+
+    order.cart[2].totalOther = updateOtherTotal(order.cart[2].other);
+
+    const document = await orderService.updateCartInOrder(orderId, order.cart);
+    return res.send("Xóa món thành công khỏi menu trong order");
   } catch (error) {
     return next(
       new ApiError(

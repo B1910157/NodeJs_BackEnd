@@ -20,6 +20,8 @@ class OrderService {
       phone: payload.phone,
       email: payload.email,
       address: payload.address,
+      payment: payload.payment,
+      deposit: payload.deposit || 0,
       status: 0,
     };
 

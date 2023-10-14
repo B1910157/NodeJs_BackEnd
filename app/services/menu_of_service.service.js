@@ -79,27 +79,13 @@ class MenuService {
     return menus;
   }
 
-  // async findAllFoodInMenu() {
-  //   const foodIds = await this.Menu.aggregate([
-  //     {
-  //       $unwind: "$list.items", // Tách các foodId thành các tài liệu riêng biệt
-  //     },
-  //     {
-  //       $group: {
-  //         _id: null,
-  //         foodIds: { $addToSet: "$list.items" }, // Sử dụng $addToSet để loại bỏ các giá trị trùng lặp
-  //       },
-  //     },
-  //   ]).toArray();
-  //   return foodIds;
-  // }
-
-  //Tìm tất cả món ăn của một dịch vụ
-  async findAllMenuOfService(service_id) {
+  //Tìm tất cả món ăn của một dịch vụ Cho User STATUS = 1
+  async findAllMenuOfServiceByUser(service_id) {
     const pipeline = [
       {
         $match: {
           service_id: new ObjectId(service_id),
+          status: 1,
         },
       },
       {
@@ -131,6 +117,69 @@ class MenuService {
     const rs = await result.toArray();
 
     return rs;
+  }
+
+  //Tìm tất cả món ăn của một dịch vụ
+  async findAllMenuOfService(service_id) {
+    const pipeline = [
+      {
+        $match: {
+          service_id: new ObjectId(service_id),
+        },
+      },
+      {
+        $lookup: {
+          from: "foods",
+          localField: "list.items.foodId",
+          foreignField: "_id",
+          as: "foodInfo",
+        },
+      },
+      {
+        $group: {
+          _id: "$_id",
+          service_id: { $first: "$service_id" },
+          menu_name: { $first: "$menu_name" },
+          list: {
+            $first: "$foodInfo",
+          },
+          total: {
+            $first: "$list.total",
+          },
+          createAt: { $first: "$createAt" },
+          updateAt: { $first: "$updateAt" },
+          status: { $first: "$status" },
+        },
+      },
+    ];
+
+    const result = await this.Menu.aggregate(pipeline);
+    const rs = await result.toArray();
+
+    return rs;
+  }
+  async publishMenu(menuId, service_id) {
+    const filter = {
+      _id: ObjectId.isValid(menuId) ? new ObjectId(menuId) : null,
+      service_id: new ObjectId(service_id),
+    };
+    const rs = await this.Menu.findOneAndUpdate(
+      filter,
+      { $set: { status: 1 } },
+      { returnDocument: "after" }
+    );
+  }
+
+  async hiddenMenu(menuId, service_id) {
+    const filter = {
+      _id: ObjectId.isValid(menuId) ? new ObjectId(menuId) : null,
+      service_id: new ObjectId(service_id),
+    };
+    const rs = await this.Menu.findOneAndUpdate(
+      filter,
+      { $set: { status: 0 } },
+      { returnDocument: "after" }
+    );
   }
 
   async update(id, payload) {

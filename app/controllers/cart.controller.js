@@ -298,7 +298,7 @@ exports.addDrinkToCart = async (req, res, next) => {
         quantity: req.body.quantity,
       });
     }
-
+   
     user.cart.items[1].totalDrink = await updateCartDrinkTotal(
       service_id,
       user.cart.items[1].drink

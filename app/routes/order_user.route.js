@@ -9,6 +9,10 @@ router.route("/").get(order.findAllOrderOfUser).post(order.addOrder);
 
 router.route("/cancel/:email/:id").post(order.orderUserCancel);
 router.route("/cancel/:email/:id").get(order.orderUserCancel);
+//USER CANCEL
+router.route("/cancel/:orderId").put(order.cancelOrderByUser);
+
+router.route("/:orderId").get(order.findOneOrder);
 
 // router.route("/cancelOrder/:orderId").get(order.cancelOrderUser);
 

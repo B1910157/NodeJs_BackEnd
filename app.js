@@ -3,7 +3,10 @@ const cors = require("cors");
 const ApiError = require("./app/api-error");
 const multer = require("multer");
 
+const paymentRoute = require("./app/routes/payment.js");
+const paymentVNPayRoute = require("./app/routes/paymentVNPay.js");
 const userRoute = require("./app/routes/user.route");
+const adminRoute = require("./app/routes/admin.route.js");
 const serviceRoute = require("./app/routes/service.route");
 const managerRoute = require("./app/routes/manager.route");
 const food_categoryRoute = require("./app/routes/food_category.route");
@@ -20,6 +23,7 @@ const infoServiceRoute = require("./app/routes/infoService.route");
 
 const checkUser = require("./app/middlewares/check_user");
 const checkService = require("./app/middlewares/checkService.js");
+const checkAdmin = require("./app/middlewares/check_adminPage");
 
 const app = express();
 app.use(cors());
@@ -44,6 +48,7 @@ const upload = multer({
 });
 
 app.use("/api/users", userRoute);
+app.use("/api/admin", adminRoute);
 app.use("/api/services", serviceRoute);
 // app.use("/api/foods", checkUser, upload.single('image'), foodRoute);
 // app.use("/api/manager", checkService,  managerRoute)
@@ -59,6 +64,8 @@ app.use("/api/infoService", checkService, infoServiceRoute);
 app.use("/api/feedback", checkUser, feedback);
 app.use("/api/cart", checkUser, cartRoute);
 app.use("/api/items", itemsRoute);
+app.use("/api/payment", paymentRoute);
+app.use("/api/paymentVNpay", paymentVNPayRoute);
 
 // handle 404 response
 app.use((req, res, next) => {

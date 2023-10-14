@@ -199,13 +199,12 @@ exports.getMenuOfService = async (req, res, next) => {
   try {
     const menuService = new MenuService(MongoDB.client);
     const menu = await menuService.findAllMenuOfService(service_id);
-    
+
     menu.sort((a, b) => {
       const dateA = new Date(a.createAt);
       const dateB = new Date(b.createAt);
       return dateB - dateA;
     });
-   
 
     return res.send(menu);
   } catch (error) {
@@ -228,12 +227,34 @@ exports.getOneMenu = async (req, res, next) => {
     );
   }
 };
+exports.publishMenu = async (req, res, next) => {
+  service_id = req.service.id;
+  const menuId = req.params.menuId;
+  try {
+    const menuService = new MenuService(MongoDB.client);
+    const rs = await menuService.publishMenu(menuId, service_id);
+    return res.send(" thành công");
+  } catch (error) {
+    return next(new ApiError(500, `Publish menu error! ${error}`));
+  }
+};
+exports.hiddenMenu = async (req, res, next) => {
+  service_id = req.service.id;
+  const menuId = req.params.menuId;
+  try {
+    const menuService = new MenuService(MongoDB.client);
+    const rs = await menuService.hiddenMenu(menuId, service_id);
+    return res.send("thành công");
+  } catch (error) {
+    return next(new ApiError(500, `Publish menu error! ${error}`));
+  }
+};
 
 exports.getMenuOfServiceForUser = async (req, res, next) => {
   service_id = req.params.service_id;
   try {
     const menuService = new MenuService(MongoDB.client);
-    const menu = await menuService.findAllMenuOfService(service_id);
+    const menu = await menuService.findAllMenuOfServiceByUser(service_id);
     return res.send(menu);
   } catch (error) {
     return next(

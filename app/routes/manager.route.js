@@ -5,7 +5,10 @@ const menu = require("../controllers/menu_of_service.controller");
 const food = require("../controllers/food.controller");
 const drink = require("../controllers/drink.controller");
 const other = require("../controllers/other.controller");
+const job = require("../controllers/job.controller");
+
 const { route } = require("./service.route");
+
 const router = express.Router();
 
 //Food
@@ -55,5 +58,16 @@ router.route("/getMenu").get(menu.getMenuOfService);
 router.route("/addFood/:id/:foodId").post(menu.addToMenuFood);
 router.route("/menu/:id/food/:foodId").delete(menu.deleteFoodInMenu);
 router.route("/menu/:id").delete(menu.deleteMenu);
+
+router.route("/menu/publish/:menuId").put(menu.publishMenu);
+router.route("/menu/hidden/:menuId").put(menu.hiddenMenu);
+
+//JOBS
+router.route("/job").post(job.create);
+router.route("/job/:jobId").get(job.findOneJob);
+router.route("/job").get(job.findAllJobOfService);
+
+//Change Image
+router.route("/changeImage").post(service.changeImage);
 
 module.exports = router;

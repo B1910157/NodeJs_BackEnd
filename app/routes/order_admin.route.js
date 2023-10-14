@@ -26,12 +26,26 @@ router
 
 //Drink
 router
+  .route("/order/findDrinkNotInOrder/:orderId")
+  .get(order.findDrinkNotInOrder);
+router
   .route("/:orderId/addOrUpdateDrink")
   .put(order.addOrUpdateDrinkInCartOfOrder);
 
 router
   .route("/removeDrinkInOrder/:orderId/:drinkId")
   .delete(order.removeDrinkInOrder);
+
+//OTHER
+router
+  .route("/addOtherToCartInOrder/:orderId/:otherId")
+  .get(order.addOtherToCartInOrder);
+router
+  .route("/order/findOtherNotInOrder/:orderId")
+  .get(order.findOtherNotInOrder);
+router
+  .route("/removeOtherInOrder/:orderId/:otherId")
+  .delete(order.removeOtherInOrder);
 
 // router.route("/cancelOrder/:orderId").get(order.cancelOrderUser);
 

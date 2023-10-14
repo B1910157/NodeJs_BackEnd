@@ -24,6 +24,7 @@ class ServiceProvider {
       support_party_type: payload.support_party_type,
       foods: payload.food || [],
       others: payload.other || [],
+      image: payload.image || [],
     };
 
     //Remove undefined fields
@@ -35,6 +36,8 @@ class ServiceProvider {
 
   async create(payload) {
     const service = await this.extractServiceData(payload);
+    service.createAt = new Date();
+    service.updateAt = new Date();
     const result = await this.Service.insertOne(service);
     return result.insertedId;
   }
@@ -44,9 +47,23 @@ class ServiceProvider {
     };
 
     const update = this.extractServiceData(payload);
+    update.updateAt = new Date();
     const result = await this.Service.findOneAndUpdate(
       filter,
       { $set: update },
+      { returnDocument: "after" }
+    );
+    return result.value;
+  }
+  async changeImage(serviceId, image) {
+    const filter = {
+      _id: ObjectId.isValid(serviceId) ? new ObjectId(serviceId) : null,
+    };
+
+    // const update = this.extractServiceData(payload);
+    const result = await this.Service.findOneAndUpdate(
+      filter,
+      { $set: { image: image, updateAt: new Date() } },
       { returnDocument: "after" }
     );
     return result.value;
@@ -65,6 +82,7 @@ class ServiceProvider {
           // bank_name: newInfo.bank_name,
           support_area: newInfo.support_area,
           support_party_type: newInfo.support_party_type,
+          updateAt: new Date(),
         },
       }
     );

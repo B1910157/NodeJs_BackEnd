@@ -94,7 +94,7 @@ exports.findOne = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   let service_id;
   service_id = req.service.id;
-  console.log("Vô update nè");
+
   if (Object.keys(req.body).length === 0) {
     return next(new ApiError(400, "Data to update can not be empty!"));
   }
