@@ -46,34 +46,32 @@ exports.findAllDrinkOfService = async (req, res, next) => {
   } else {
     service_id = req.service.id;
   }
- 
+
   try {
     const drinkService = new DrinkService(MongoDB.client);
     const { drink_name } = req.query;
-    
+
     if (drink_name) {
       documents = await drinkService.findByName(drink_name);
     } else {
       documents = await drinkService.findAllDrinkOfService(service_id);
     }
-   
+    documents.sort((a, b) => {
+      const dateA = new Date(a.updateAt);
+      const dateB = new Date(b.updateAt);
+      return dateB - dateA;
+    });
+
     return res.send(documents);
   } catch (error) {
     return next(new ApiError(500, "An error occurred while retrieving drink!"));
   }
-
- 
 };
-
-
 
 exports.findOneDrink = async (req, res, next) => {
   try {
     const drinkService = new DrinkService(MongoDB.client);
-    const document = await drinkService.findById(
-      req.params.drinkId
-    
-    );
+    const document = await drinkService.findById(req.params.drinkId);
     if (!document) {
       return next(new ApiError(404, "drink not found!"));
     }

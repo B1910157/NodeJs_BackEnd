@@ -55,6 +55,11 @@ exports.findAllOtherOfService = async (req, res, next) => {
     } else {
       documents = await otherService.findAllOtherOfService(service_id);
     }
+    documents.sort((a, b) => {
+      const dateA = new Date(a.updateAt);
+      const dateB = new Date(b.updateAt);
+      return dateB - dateA;
+    });
   } catch (error) {
     return next(new ApiError(500, "An error occurred while retrieving other!"));
   }

@@ -190,6 +190,20 @@ exports.acceptOrder = async (req, res, next) => {
       parseInt(order.cart[0].totalMenu) * parseInt(order.tray_quantity) +
       parseInt(order.cart[1].totalDrink) +
       parseInt(order.cart[2].totalOther);
+
+    let deposit = order.deposit;
+    let depositSend = "";
+    formatDeposit = deposit.toLocaleString("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    });
+    if (order.paymentMethod === "vnpay") {
+      depositSend = "Bạn đã thanh toán trước: " + formatDeposit + "<br>";
+    } else if (order.paymentMethod === "paylater") {
+      depositSend = "Bạn chọn thanh toán trực tiếp <br>";
+    }
+    // depositSend = "Bạn đã thanh toán trước: " + deposit;
+
     const formattedTotalOrder = totalOrder.toLocaleString("vi-VN", {
       style: "currency",
       currency: "VND",
@@ -201,7 +215,7 @@ exports.acceptOrder = async (req, res, next) => {
       "Tổng tiền theo đơn đặt tiệc của bạn: " +
       formattedTotalOrder +
       "<br>" +
-      "Cảm ơn bạn đã sử dụng dịch vụ." +
+      "Cảm ơn bạn đã sử dụng dịch vụ. Bạn có thể thanh toán đơn hàng trong phần <b> lịch sử đơn hàng </b> hoặc bạn có thể <b> thanh toán trực tiếp</b>" +
       "<br>" +
       "Bạn có thể hủy yêu cầu đặt tiệc trong vòng 24h" +
       "<br>" +
@@ -209,7 +223,11 @@ exports.acceptOrder = async (req, res, next) => {
     <a href="http://localhost:3001/notification/${orderId}" style="text-decoration: none; color: white;">Hủy</a>
   </button>`;
 
-    sendEmail("tinb1910157@student.ctu.edu.vn", "Hello", content);
+    sendEmail(
+      "tinb1910157@student.ctu.edu.vn",
+      "Phản hồi yêu cầu đặt tiệc",
+      content
+    );
     return res.send("Accept order successful");
   } catch (error) {}
 };
@@ -218,9 +236,10 @@ exports.orderUserCancel = async (req, res, next) => {
   try {
     console.log("hihihihi", req.body, req.params.id, req.params.email);
     const orderId = req.params.id;
+    // const order = await orderService.findById(orderId);
     email = req.params.email;
     const orderService = new OrderService(MongoDB.client);
-    order = await orderService.findById(orderId);
+    const order = await orderService.findById(orderId);
     console.log("order", order);
     if (order.email == email) {
       console.log("HỢP LỆ -> CHO HỦY");
@@ -232,9 +251,30 @@ exports.orderUserCancel = async (req, res, next) => {
 
 exports.cancelOrder = async (req, res, next) => {
   try {
-    orderId = req.params.orderId;
+    const orderId = req.params.orderId;
+    console.log("body reason", req.body, orderId);
+
     const orderService = new OrderService(MongoDB.client);
+    const serviceProvider = new ServiceProvider(MongoDB.client);
+    const order = await orderService.findById(orderId);
+    service = await serviceProvider.findById(order.service_id);
     orderService.cancelOrder(orderId);
+    let content = "<b>ĐƠN ĐẶT TIỆC KHÔNG THÀNH CÔNG</b><br>";
+    content +=
+      "Bạn vừa đặt tiệc của dịch vụ: " +
+      service.service_name +
+      "<b> không thành công </b>";
+    if (req.body.reason) {
+      content += "<b>Lý do: </b>" + req.body.reason + "<br>";
+    }
+    content +=
+      "Vui lòng thử lại hoặc liên hệ đến chủ dịch vụ <br> Trân trọng!!!";
+    //SEND MAIL CANCEL ORDER WITH REASON
+    sendEmail(
+      "tinb1910157@student.ctu.edu.vn",
+      "Phản hồi yêu cầu đặt tiệc",
+      content
+    );
     return res.send("cancel order successful");
   } catch (error) {}
 };
@@ -245,6 +285,19 @@ exports.cancelOrderByUser = async (req, res, next) => {
     const orderService = new OrderService(MongoDB.client);
     orderService.cancelOrderForUser(orderId);
     return res.send("cancel order by user successful");
+  } catch (error) {}
+};
+
+exports.paymentWithUser = async (req, res, next) => {
+  try {
+    orderId = req.body.orderId;
+    statusPayment = req.body.paymentMethod;
+    console.log("Payment method: ", req.body);
+    const orderService = new OrderService(MongoDB.client);
+    let amount = req.body.amount;
+    amount = amount / 100;
+    orderService.updateStatusPayment(orderId, statusPayment, amount);
+    return res.send("update status payment successful");
   } catch (error) {}
 };
 

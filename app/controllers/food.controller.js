@@ -57,6 +57,11 @@ exports.findAllFoodOfService = async (req, res, next) => {
     } else {
       documents = await foodService.findAllFoodOfService(service_id);
     }
+    documents.sort((a, b) => {
+      const dateA = new Date(a.updateAt);
+      const dateB = new Date(b.updateAt);
+      return dateB - dateA;
+    });
   } catch (error) {
     return next(new ApiError(500, "An error occured while retrieving food!"));
   }

@@ -183,6 +183,11 @@ exports.findAllService = async (req, res, next) => {
   try {
     const serviceProvider = new ServiceProvider(MongoDB.client);
     const document = await serviceProvider.findAllService();
+    document.sort((a, b) => {
+      const dateA = new Date(a.updateAt);
+      const dateB = new Date(b.updateAt);
+      return dateB - dateA;
+    });
     return res.send(document);
     // return res.send(`Inserted new service have Id: ${document.insertedId}`);
   } catch (error) {

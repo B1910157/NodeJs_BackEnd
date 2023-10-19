@@ -13,7 +13,7 @@ class OrderService {
       user_id: payload.user_id ? new ObjectId(payload.user_id) : null,
       event_date: payload.event_date,
       event_time: payload.event_time,
-      tray_quantity: payload.tray_quantity,
+      tray_quantity: parseInt(payload.tray_quantity),
       cart: payload.cart.items || [], //TODO can xem lai luc push cart ???
       note: payload.note,
       fullname: payload.fullname,
@@ -21,8 +21,12 @@ class OrderService {
       email: payload.email,
       address: payload.address,
       payment: payload.payment,
-      deposit: payload.deposit || 0,
+      deposit: parseInt(payload.deposit) || 0,
+      percentPayment: payload.percentPayment,
+      total: parseInt(payload.total) || 0,
       status: 0,
+      statusPayment: 0,
+      paymentMethod: payload.paymentMethod || "",
     };
 
     Object.keys(order).forEach(
@@ -101,6 +105,24 @@ class OrderService {
     const cancel = await this.Order.findOneAndUpdate(
       filter,
       { $set: { status: 3, updateAt: new Date() } },
+      { returnDocument: "after" }
+    );
+  }
+
+  async updateStatusPayment(orderId, status, amount) {
+    const filter = {
+      _id: ObjectId.isValid(orderId) ? new ObjectId(orderId) : null,
+    };
+    const cancel = await this.Order.findOneAndUpdate(
+      filter,
+      {
+        $set: {
+          deposit: parseInt(amount),
+          paymentMethod: status,
+          statusPayment: 1,
+          updateAt: new Date(),
+        },
+      },
       { returnDocument: "after" }
     );
   }

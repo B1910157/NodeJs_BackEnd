@@ -12,6 +12,9 @@ router.route("/cancel/:email/:id").get(order.orderUserCancel);
 //USER CANCEL
 router.route("/cancel/:orderId").put(order.cancelOrderByUser);
 
+//CHOOSE PAYMENT METHOD
+router.route("/choosePayment").post(order.paymentWithUser);
+
 router.route("/:orderId").get(order.findOneOrder);
 
 // router.route("/cancelOrder/:orderId").get(order.cancelOrderUser);
