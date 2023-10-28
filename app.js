@@ -7,7 +7,9 @@ const paymentRoute = require("./app/routes/payment.js");
 const paymentVNPayRoute = require("./app/routes/paymentVNPay.js");
 const userRoute = require("./app/routes/user.route");
 const adminRoute = require("./app/routes/admin.route.js");
+const adminInfoRoute = require("./app/routes/infoAdmin.route.js");
 const serviceRoute = require("./app/routes/service.route");
+const managerServiceRoute = require("./app/routes/managerService.route");
 const managerRoute = require("./app/routes/manager.route");
 const food_categoryRoute = require("./app/routes/food_category.route");
 const type_partyRoute = require("./app/routes/type_party.route");
@@ -20,6 +22,7 @@ const orderServiceRoute = require("./app/routes/order_admin.route");
 const cartRoute = require("./app/routes/cart.route");
 const itemsRoute = require("./app/routes/items.route");
 const infoServiceRoute = require("./app/routes/infoService.route");
+const commentAndEvaluate = require("./app/routes/commentAndEvaluate.route");
 
 const checkUser = require("./app/middlewares/check_user");
 const checkService = require("./app/middlewares/checkService.js");
@@ -49,7 +52,9 @@ const upload = multer({
 
 app.use("/api/users", userRoute);
 app.use("/api/admin", adminRoute);
+app.use("/api/adminInfo", checkAdmin, adminInfoRoute);
 app.use("/api/services", serviceRoute);
+app.use("/api/managerService", checkAdmin, managerServiceRoute);
 // app.use("/api/foods", checkUser, upload.single('image'), foodRoute);
 // app.use("/api/manager", checkService,  managerRoute)
 app.use("/api/manager", checkService, upload.single("image"), managerRoute);
@@ -64,6 +69,7 @@ app.use("/api/infoService", checkService, infoServiceRoute);
 app.use("/api/feedback", checkUser, feedback);
 app.use("/api/cart", checkUser, cartRoute);
 app.use("/api/items", itemsRoute);
+app.use("/api/commentAndEvaluate", commentAndEvaluate);
 app.use("/api/payment", paymentRoute);
 app.use("/api/paymentVNpay", paymentVNPayRoute);
 

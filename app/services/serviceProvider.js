@@ -17,14 +17,14 @@ class ServiceProvider {
       phone: payload.phone,
       address: payload.address,
       password: hashPass,
-      bank_name: payload.bank_name,
-      card_number: payload.card_number,
-      status: "1",
+      bank_name: payload.bank_name || "",
+      card_number: payload.card_number || "",
+      status: 0,
       support_area: payload.support_area,
       support_party_type: payload.support_party_type,
-      foods: payload.food || [],
-      others: payload.other || [],
-      image: payload.image || [],
+      // foods: payload.food || [],
+      // others: payload.other || [],
+      image: payload.image || "default.jpg",
     };
 
     //Remove undefined fields
@@ -55,6 +55,28 @@ class ServiceProvider {
     );
     return result.value;
   }
+  async updateStatus(serviceId, status) {
+    const filter = {
+      _id: ObjectId.isValid(serviceId) ? new ObjectId(serviceId) : null,
+    };
+    if (status == 0) {
+      // const update = this.extractServiceData(payload);
+      const result = await this.Service.findOneAndUpdate(
+        filter,
+        { $set: { status: 1, updateAt: new Date() } },
+        { returnDocument: "after" }
+      );
+      return result.value;
+    } else if (status == 1) {
+      // const update = this.extractServiceData(payload);
+      const result = await this.Service.findOneAndUpdate(
+        filter,
+        { $set: { status: 0, updateAt: new Date() } },
+        { returnDocument: "after" }
+      );
+      return result.value;
+    }
+  }
   async changeImage(serviceId, image) {
     const filter = {
       _id: ObjectId.isValid(serviceId) ? new ObjectId(serviceId) : null,
@@ -64,6 +86,19 @@ class ServiceProvider {
     const result = await this.Service.findOneAndUpdate(
       filter,
       { $set: { image: image, updateAt: new Date() } },
+      { returnDocument: "after" }
+    );
+    return result.value;
+  }
+  async changePass(serviceId, new_pass) {
+    const filter = {
+      _id: ObjectId.isValid(serviceId) ? new ObjectId(serviceId) : null,
+    };
+    const hashPass = await bcrypt.hash(new_pass, 10);
+    // const update = this.extractServiceData(payload);
+    const result = await this.Service.findOneAndUpdate(
+      filter,
+      { $set: { password: hashPass, updateAt: new Date() } },
       { returnDocument: "after" }
     );
     return result.value;
@@ -122,6 +157,11 @@ class ServiceProvider {
 
   async findAllService() {
     const service = await this.Service.find().toArray();
+    return service;
+  }
+
+  async findAllServiceShow() {
+    const service = await this.Service.find({ status: 1 }).toArray();
     return service;
   }
 

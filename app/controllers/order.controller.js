@@ -70,14 +70,21 @@ function formatDate(inputDateStr) {
   // Trả về chuỗi gốc nếu đầu vào không hợp lệ
   return inputDateStr;
 }
+
 exports.acceptOrder = async (req, res, next) => {
   try {
     const orderId = req.params.orderId;
     const orderService = new OrderService(MongoDB.client);
     const serviceProvider = new ServiceProvider(MongoDB.client);
     const order = await orderService.findById(orderId);
+    // const status  = order.statusUpdate;
+
     service = await serviceProvider.findById(order.service_id);
     orderService.acceptOrder(orderId);
+    // const updateStatusUpdate = orderService.updateStatusUpdate(
+    //   order._id,
+    //   order.statusUpdate
+    // );
     const formattedCreateAt = formatDateTime(order.createAt);
     const formattedEventDate = formatDate(order.event_date);
     Title = "Email xác nhận đặt tiệc";
@@ -208,6 +215,21 @@ exports.acceptOrder = async (req, res, next) => {
       style: "currency",
       currency: "VND",
     });
+    var surchargeContent = "Phụ thu: Không <br>";
+    if (order.surcharges && order.surcharges.length > 0) {
+      surchargeContent = "<h3>Phụ thu</h3><table border='1'>";
+      order.surcharges.forEach((surcharge, index) => {
+        surchargeContent += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${surcharge.key}</td>
+            <td>${surcharge.value} VND</td>
+          </tr>
+        `;
+      });
+      surchargeContent += "</table> <br>";
+      // content += surchargeContent + "<br>";
+    }
     content +=
       "<b>Số lượng bàn: </b>" +
       order.tray_quantity +
@@ -215,6 +237,7 @@ exports.acceptOrder = async (req, res, next) => {
       "Tổng tiền theo đơn đặt tiệc của bạn: " +
       formattedTotalOrder +
       "<br>" +
+      surchargeContent +
       "Cảm ơn bạn đã sử dụng dịch vụ. Bạn có thể thanh toán đơn hàng trong phần <b> lịch sử đơn hàng </b> hoặc bạn có thể <b> thanh toán trực tiếp</b>" +
       "<br>" +
       "Bạn có thể hủy yêu cầu đặt tiệc trong vòng 24h" +
@@ -265,7 +288,7 @@ exports.cancelOrder = async (req, res, next) => {
       service.service_name +
       "<b> không thành công </b>";
     if (req.body.reason) {
-      content += "<b>Lý do: </b>" + req.body.reason + "<br>";
+      content += "<br><b>Lý do: </b>" + req.body.reason + "<br>";
     }
     content +=
       "Vui lòng thử lại hoặc liên hệ đến chủ dịch vụ <br> Trân trọng!!!";
@@ -298,6 +321,33 @@ exports.paymentWithUser = async (req, res, next) => {
     amount = amount / 100;
     orderService.updateStatusPayment(orderId, statusPayment, amount);
     return res.send("update status payment successful");
+  } catch (error) {}
+};
+
+exports.updateInfoParty = async (req, res, next) => {
+  try {
+    const orderId = req.params.orderId;
+    console.log(req.body);
+    const orderservice = new OrderService(MongoDB.client);
+    const rs = await orderservice.findById(orderId);
+
+    if (!rs) {
+      return res.send({ message: "Đơn hàng không hợp lệ" });
+    }
+
+    const updateInfoParty = await orderservice.updateInfoParty(
+      orderId,
+      req.body
+    );
+    if (rs.status != 0) {
+      const updateStatusUpdate = await orderservice.updateStatusUpdate(
+        rs._id,
+        0
+      );
+    }
+
+    console.log("data", orderId, rs);
+    return res.send({ message: "Cập nhật thông tin thành công" });
   } catch (error) {}
 };
 
@@ -380,6 +430,20 @@ exports.findAllOrderOfService = async (req, res, next) => {
       return dateB - dateA;
     });
 
+    return res.send(orders);
+  } catch (error) {
+    return next(new ApiError(500, "Error find All order"));
+  }
+};
+
+exports.filterOrderByDate = async (req, res, next) => {
+  const date = req.body.date;
+  console.log("hêlo", date);
+  try {
+    const orderService = new OrderService(MongoDB.client);
+
+    const orders = await orderService.findOrdersByDate(date);
+    console.log(orders);
     return res.send(orders);
   } catch (error) {
     return next(new ApiError(500, "Error find All order"));
@@ -531,6 +595,13 @@ exports.addOrUpdateDrinkInCartOfOrder = async (req, res, next) => {
     order.cart[1].totalDrink = updateDrinkTotal(order.cart[1].drink);
 
     const document = await orderService.updateCartInOrder(orderId, order.cart);
+    if (order.status != 0) {
+      const updateStatusUpdate = await orderService.updateStatusUpdate(
+        order._id,
+        0
+      );
+    }
+
     return res.send(document);
   } catch (error) {
     return next(
@@ -564,6 +635,12 @@ exports.addFoodToCartInOrder = async (req, res, next) => {
 
     order.cart[0].totalMenu = updateFoodTotal(order.cart[0].menu);
     const document = await orderService.updateCartInOrder(orderId, order.cart);
+    if (order.status != 0) {
+      const updateStatusUpdate = await orderService.updateStatusUpdate(
+        order._id,
+        0
+      );
+    }
 
     return res.send({ foodId: order.cart });
   } catch (error) {
@@ -595,6 +672,12 @@ exports.addOtherToCartInOrder = async (req, res, next) => {
 
     order.cart[2].totalOther = updateOtherTotal(order.cart[2].other);
     const document = await orderService.updateCartInOrder(orderId, order.cart);
+    if (order.status != 0) {
+      const updateStatusUpdate = await orderService.updateStatusUpdate(
+        order._id,
+        0
+      );
+    }
 
     return res.send({ foodId: order.cart });
   } catch (error) {
@@ -643,6 +726,13 @@ exports.removeFoodInOrder = async (req, res, next) => {
     order.cart[0].totalMenu = updateFoodTotal(order.cart[0].menu);
 
     const document = await orderService.updateCartInOrder(orderId, order.cart);
+    if (order.status != 0) {
+      const updateStatusUpdate = await orderService.updateStatusUpdate(
+        order._id,
+        0
+      );
+    }
+
     return res.send("Xóa món ăn thành công khỏi menu trong order");
   } catch (error) {
     return next(
@@ -669,6 +759,13 @@ exports.removeDrinkInOrder = async (req, res, next) => {
     order.cart[1].totalDrink = updateDrinkTotal(order.cart[1].drink);
 
     const document = await orderService.updateCartInOrder(orderId, order.cart);
+    if (order.status != 0) {
+      const updateStatusUpdate = await orderService.updateStatusUpdate(
+        order._id,
+        0
+      );
+    }
+
     return res.send("Xóa món ăn thành công khỏi menu trong order");
   } catch (error) {
     return next(
@@ -694,6 +791,13 @@ exports.removeOtherInOrder = async (req, res, next) => {
     order.cart[2].totalOther = updateOtherTotal(order.cart[2].other);
 
     const document = await orderService.updateCartInOrder(orderId, order.cart);
+    if (order.status != 0) {
+      const updateStatusUpdate = await orderService.updateStatusUpdate(
+        order._id,
+        0
+      );
+    }
+
     return res.send("Xóa món thành công khỏi menu trong order");
   } catch (error) {
     return next(
@@ -703,4 +807,202 @@ exports.removeOtherInOrder = async (req, res, next) => {
       )
     );
   }
+};
+
+exports.surcharges = async (req, res, next) => {
+  const orderId = req.body.orderId;
+  try {
+    const orderService = new OrderService(MongoDB.client);
+    const order = await orderService.findById(orderId);
+    console.log("BODY", req.body);
+    const rs = await orderService.addSurcharges(orderId, req.body.surcharges);
+    // const updateStatusUpdate = await orderService.updateStatusUpdate(
+    //   order._id,
+    //   0
+    // );
+    return res.send("Thêm phụ thu thành công");
+  } catch (error) {
+    return next(new ApiError(500, `An error occurred surcharges! ${error}`));
+  }
+};
+
+exports.reSendMail = async (req, res, next) => {
+  try {
+    const orderId = req.params.orderId;
+    const orderService = new OrderService(MongoDB.client);
+    const serviceProvider = new ServiceProvider(MongoDB.client);
+    const order = await orderService.findById(orderId);
+    // const status  = order.statusUpdate;
+
+    service = await serviceProvider.findById(order.service_id);
+    // orderService.acceptOrder(orderId);
+    // const updateStatusUpdate = orderService.updateStatusUpdate(
+    //   order._id,
+    //   order.statusUpdate
+    // );
+    const formattedCreateAt = formatDateTime(order.createAt);
+    const formattedEventDate = formatDate(order.event_date);
+    Title = "Email xác nhận lại yêu cầu đặt tiệc";
+    let content =
+      "Bạn vừa đặt tiệc thành công từ: " +
+      "<b>" +
+      service.service_name +
+      "</b>" +
+      "<br>" +
+      "<b>THÔNG TIN DỊCH VỤ</b> <br>" +
+      "<b>Email:</b> " +
+      service.email +
+      "<br>" +
+      "<b>Số điện thoại:</b> " +
+      service.phone +
+      "<br>" +
+      "<b>Địa chỉ:</b> " +
+      service.address +
+      "<br>" +
+      "<b>THÔNG TIN ĐẶT TIỆC</b>" +
+      "<br>" +
+      "<b>Khách hàng:</b> " +
+      order.fullname +
+      "<br>" +
+      "<b>Số điện thoại:</b> " +
+      order.phone +
+      "<br>" +
+      "<b>Địa chỉ tiệc: </b>" +
+      order.address +
+      "<br>" +
+      "<b>Ngày thực hiện:</b> " +
+      formattedCreateAt +
+      "<br>" +
+      "<b>Ngày diễn ra:</b> " +
+      formattedEventDate +
+      "<b> Vào lúc: </b>" +
+      order.event_time +
+      "<br>";
+    let menuContent = `
+  <h3>Thực đơn</h3>
+  <table border="1">
+    <tr>
+      <th>Số thứ tự</th>
+      <th>Tên món ăn</th>
+      <th>Giá</th>
+    </tr>
+`;
+
+    order.cart[0].menu.forEach((menuItem, index) => {
+      menuContent += `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${menuItem.food_name}</td>
+          <td>${menuItem.price} VND</td>
+        </tr>
+      `;
+    });
+
+    menuContent += `
+    <tr>
+      <td colspan="2">Tổng tiền thực đơn:</td>
+      <td>${order.cart[0].totalMenu} VND/Bàn</td>
+    </tr>
+    </table>
+    `;
+    content += menuContent + "<br>";
+    if (order.cart[1].drink.length > 0) {
+      let drinkContent = "<h3>Đồ uống</h3><table border='1'>";
+      order.cart[1].drink.forEach((drinkItem, index) => {
+        drinkContent += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${drinkItem.drink_name}</td>
+            <td>Số lượng: ${drinkItem.quantity}</td>
+            <td>Giá: ${drinkItem.price} VND</td>
+          </tr>
+        `;
+      });
+      drinkContent += `
+        <tr>
+          <td colspan='3'>Tổng tiền đồ uống:</td>
+          <td>${order.cart[1].totalDrink} VND</td>
+        </tr>
+      </table>`;
+      // console.log("Drink", drinkContent);
+      content += drinkContent + "<br>";
+    }
+
+    if (order.cart[2].other.length > 0) {
+      let otherContent = "<h3>Khác:</h3><table border='1'>";
+      order.cart[2].other.forEach((otherItem, index) => {
+        otherContent += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${otherItem.other_name}</td>
+            <td>Giá: ${otherItem.price} VND</td>
+          </tr>
+        `;
+      });
+      otherContent += `
+        <tr>
+          <td colspan='2'>Tổng tiền:</td>
+          <td>${order.cart[2].totalOther} VND</td>
+        </tr>
+      </table>`;
+      // console.log("Other", otherContent);
+      content += otherContent + "<br>";
+    }
+    const totalOrder =
+      parseInt(order.cart[0].totalMenu) * parseInt(order.tray_quantity) +
+      parseInt(order.cart[1].totalDrink) +
+      parseInt(order.cart[2].totalOther);
+
+    let deposit = order.deposit;
+    let depositSend = "";
+    formatDeposit = deposit.toLocaleString("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    });
+    if (order.paymentMethod === "vnpay") {
+      depositSend = "Bạn đã thanh toán trước: " + formatDeposit + "<br>";
+    } else if (order.paymentMethod === "paylater") {
+      depositSend = "Bạn chọn thanh toán trực tiếp <br>";
+    }
+    // depositSend = "Bạn đã thanh toán trước: " + deposit;
+
+    const formattedTotalOrder = totalOrder.toLocaleString("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    });
+    var surchargeContent = "Phụ thu: Không <br>";
+    if (order.surcharges && order.surcharges.length > 0) {
+      surchargeContent = "<h3>Phụ thu</h3><table border='1'>";
+      order.surcharges.forEach((surcharge, index) => {
+        surchargeContent += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${surcharge.key}</td>
+            <td>${surcharge.value} VND</td>
+          </tr>
+        `;
+      });
+      surchargeContent += "</table> <br>";
+      // content += surchargeContent + "<br>";
+    }
+    content +=
+      "<b>Số lượng bàn: </b>" +
+      order.tray_quantity +
+      "<br>" +
+      "Tổng tiền theo đơn đặt tiệc của bạn: " +
+      formattedTotalOrder +
+      "<br>" +
+      surchargeContent +
+      "Cảm ơn bạn đã sử dụng dịch vụ. Bạn có thể thanh toán đơn hàng trong phần <b> lịch sử đơn hàng </b> hoặc bạn có thể <b> thanh toán trực tiếp</b>" +
+      "<br>" +
+      "Bạn có thể hủy yêu cầu đặt tiệc trong vòng 24h" +
+      "<br>" +
+      ` <button style="background-color: #FF0000; color: white; padding: 5px 10px; border: none; cursor: pointer;">
+    <a href="http://localhost:3001/notification/${orderId}" style="text-decoration: none; color: white;">Hủy</a>
+  </button>`;
+
+    sendEmail("tinb1910157@student.ctu.edu.vn", Title, content);
+    const updateStatusUpdate = orderService.updateStatusUpdate(order._id, 1);
+    return res.send("Accept order successful");
+  } catch (error) {}
 };

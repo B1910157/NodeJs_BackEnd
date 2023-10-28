@@ -9,33 +9,28 @@ const other = require("../controllers/other.controller");
 
 const router = express.Router();
 
-router.route("/")
-    .get(service.findAllService)
+router.route("/").get(service.findAllServiceShow);
 
-router.route("/findOneFood/:service_id/:foodId").get(service.findOneFoodWithUser)
+router
+  .route("/findOneFood/:service_id/:foodId")
+  .get(service.findOneFoodWithUser);
 
 //CHOOSE SERVICE
 router.route("/chooseService/:service_id").get(cart.chooseService);
-router.route("/unChoose").put(cart.removeService)
+router.route("/unChoose").put(cart.removeService);
 
+router.route("/:service_id").get(service.findOneService);
 
-router.route("/:service_id")
-    .get(service.findOneService)
-
-router.route("/:service_id/getMenu").get(menu.getMenuOfServiceForUser)
-
+router.route("/:service_id/getMenu").get(menu.getMenuOfServiceForUser);
 
 //Get food of service
-router.route("/:service_id/getFood").get(food.findAllFoodOfService)
-
+router.route("/:service_id/getFood").get(food.findAllFoodOfService);
 
 //Get Drink of service
-router.route("/:service_id/getDrink").get(drink.findAllDrinkOfService)
-
+router.route("/:service_id/getDrink").get(drink.findAllDrinkOfService);
 
 //Get other of service
 
-router.route("/:service_id/getOther").get(other.findAllOtherOfService)
-
+router.route("/:service_id/getOther").get(other.findAllOtherOfService);
 
 module.exports = router;

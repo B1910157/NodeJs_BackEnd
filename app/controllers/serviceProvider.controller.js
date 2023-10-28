@@ -8,10 +8,55 @@ const ApiError = require("../api-error");
 const { ObjectId } = require("mongodb");
 const path = require("path");
 const fs = require("fs");
+const nodemailer = require("nodemailer");
 
+function generateRandomPassword(length) {
+  const charset =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let password = "";
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * charset.length);
+    password += charset[randomIndex];
+  }
+  return password;
+}
+const sendEmail = async (toEmail, subject, text) => {
+  try {
+    // Tạo một transporter (cấu hình tài khoản email gửi)
+    const transporter = nodemailer.createTransport({
+      service: "gmail", // Sử dụng dịch vụ Gmail
+      auth: {
+        user: "huutintin1312@gmail.com", // Email nguồn
+        pass: "xozk rcvy ttlv tmts", // Mật khẩu email nguồn
+      },
+    });
+
+    // Thông tin email
+    const mailOptions = {
+      from: "huutintin1312@gmail.com", // Email nguồn
+      to: toEmail, // Email đích
+      subject: subject, // Tiêu đề email
+      html: `
+        <div>${text}</div>
+      `,
+    };
+
+    // Gửi email
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log("Email sent: " + info.response);
+  } catch (error) {
+    console.error("Error sending email:", error);
+  }
+};
 exports.create = async (req, res, next) => {
   if (!req.body?.email) {
     return next(new ApiError(400, "Email can not be empty"));
+  }
+  const serviceProvider = new ServiceProvider(MongoDB.client);
+  const service = await serviceProvider.findEmail(req.body.email);
+  if (service) {
+    return res.send({ status: 400, message: "Email đã được sử dụng" });
   }
 
   if (!req.body?.password) {
@@ -26,6 +71,60 @@ exports.create = async (req, res, next) => {
     const serviceProvider = new ServiceProvider(MongoDB.client);
 
     const document = await serviceProvider.create(req.body);
+    return res.send(document);
+  } catch (error) {
+    return next(
+      new ApiError(500, "An error occurred while creating the service")
+    );
+  }
+};
+
+exports.adminCreate = async (req, res, next) => {
+  if (!req.body?.email) {
+    return next(new ApiError(400, "Email can not be empty"));
+  }
+  const serviceProvider = new ServiceProvider(MongoDB.client);
+  const service = await serviceProvider.findEmail(req.body.email);
+  if (service) {
+    return res.send({ status: 400, message: "Email đã được sử dụng" });
+  }
+  const randomPassword = generateRandomPassword(10);
+  if (!req.body?.password) {
+    req.body.password = randomPassword;
+    console.log("pass random", req.body.password);
+  }
+  if (!req.body?.support_area || !req.body?.support_party_type) {
+    req.body.support_area = "";
+    req.body.support_party_type = "";
+  }
+  try {
+    const serviceProvider = new ServiceProvider(MongoDB.client);
+    const address =
+      req.body.address_detail +
+      ", " +
+      req.body.wardName +
+      ", " +
+      req.body.districtName +
+      ", " +
+      req.body.provinceName;
+    req.body.address = address;
+    console.log(req.body);
+    const document = await serviceProvider.create(req.body);
+    let content =
+      "ĐĂNG KÝ DỊCH VỤ HỖ TRỢ TIỆC LƯU ĐỘNG THÀNH CÔNG <br>" +
+      "Vui lòng truy cập vào http://localhost:3003  tùy chỉnh thông tin để có thể hoạt động trên website <br>" +
+      "<b>Tài khoản của bạn: </b> <br>" +
+      "<b>Email: </b>" +
+      req.body.email +
+      "<br>" +
+      "<b>Mật khẩu: </b>" +
+      randomPassword +
+      "<br>";
+    sendEmail(
+      "tinb1910157@student.ctu.edu.vn",
+      "ĐĂNG KÝ TÀI KHOẢN DỊCH VỤ THÀNH CÔNG",
+      content
+    );
     return res.send(document);
   } catch (error) {
     return next(
@@ -79,6 +178,27 @@ exports.logout = async (req, res, next) => {
   } catch (error) {
     return next(new ApiError(500, "logout fail"));
   }
+};
+
+exports.changePass = async (req, res, next) => {
+  try {
+    const pass_old = req.body.pass_old;
+    const pass_new = req.body.pass_new;
+    const service_id = req.service.id;
+    const serviceProvider = new ServiceProvider(MongoDB.client);
+    const service = await serviceProvider.findById(service_id);
+    const comparePass = await bcrypt.compare(pass_old, service.password);
+    if (!comparePass) {
+      // return res.status(400).json({ error: "Mật khẩu cũ không đúng" });
+      return res.send({ status: 400, message: "Mật khẩu cũ không đúng" });
+    } else {
+      const rs = await serviceProvider.changePass(service_id, pass_new);
+
+      // return res.status(200).json({ message: "Thay đổi mật khẩu thành công" });
+      return res.send({ status: 200, message: "Thay đổi mật khẩu thành công" });
+      // return res.send("Thay đổi mật khẩu thành công");
+    }
+  } catch (error) {}
 };
 
 exports.changeImage = async (req, res, next) => {
@@ -179,10 +299,46 @@ exports.findOneService = async (req, res, next) => {
   }
 };
 
+exports.updateStatus = async (req, res, next) => {
+  try {
+    console.log("body", req.body);
+    // const serviceId = req.body.serviceId;
+
+    const serviceProvider = new ServiceProvider(MongoDB.client);
+    const service = await serviceProvider.findById(req.body.serviceId);
+    if (service) {
+      const rs = await serviceProvider.updateStatus(
+        service._id,
+        req.body.status
+      );
+      console.log(rs);
+      return res.send("Cập nhật trạng thái thành công");
+    } else {
+      return res.send("Dịch vụ không hợp lệ");
+    }
+  } catch (error) {
+    return next(new ApiError(500, "update status error"));
+  }
+};
 exports.findAllService = async (req, res, next) => {
   try {
     const serviceProvider = new ServiceProvider(MongoDB.client);
     const document = await serviceProvider.findAllService();
+    document.sort((a, b) => {
+      const dateA = new Date(a.updateAt);
+      const dateB = new Date(b.updateAt);
+      return dateB - dateA;
+    });
+    return res.send(document);
+    // return res.send(`Inserted new service have Id: ${document.insertedId}`);
+  } catch (error) {
+    return next(new ApiError(500, "findAllService error"));
+  }
+};
+exports.findAllServiceShow = async (req, res, next) => {
+  try {
+    const serviceProvider = new ServiceProvider(MongoDB.client);
+    const document = await serviceProvider.findAllServiceShow();
     document.sort((a, b) => {
       const dateA = new Date(a.updateAt);
       const dateB = new Date(b.updateAt);

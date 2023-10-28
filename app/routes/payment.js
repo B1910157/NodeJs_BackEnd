@@ -7,7 +7,11 @@ const vnPay = require("../controllers/vnPay.controller");
 
 const router = express.Router();
 
+//get customer
+router.route("/getCustomer").get(payment.getCustomerByEmail);
+
 router.route("/").post(payment.create_payment);
+
 router.route("/getOne/:idPayment").get(payment.getOnePaymentById);
 router.route("/getAll").get(payment.getAllSuccessfulPayments);
 router.route("/addMoney").post(payment.addFundsToCustomer);

@@ -37,7 +37,7 @@ class AdminService {
     return user;
   }
   async findById(id) {
-    return await this.User.findOne({
+    return await this.Admin.findOne({
       _id: ObjectId.isValid(id) ? new ObjectId(id) : null,
     });
   }

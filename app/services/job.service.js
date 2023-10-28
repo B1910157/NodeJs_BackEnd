@@ -95,14 +95,14 @@ class JobService {
     );
   }
 
-  async update(id, service_id, payload) {
+  async updateOnePostJob(id, service_id, payload) {
     const filter = {
       _id: ObjectId.isValid(id) ? new ObjectId(id) : null,
       service_id: new ObjectId(service_id),
     };
-    const update = await this.extractOrderData(payload);
+    const update = await this.extractJobData(payload, service_id);
     update.updateAt = new Date();
-    const result = await this.Order.findOneAndUpdate(
+    const result = await this.Job.findOneAndUpdate(
       filter,
       { $set: update },
       { returnDocument: "after" }

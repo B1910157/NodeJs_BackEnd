@@ -27,6 +27,7 @@ class OrderService {
       status: 0,
       statusPayment: 0,
       paymentMethod: payload.paymentMethod || "",
+      statusUpdate: 0,
     };
 
     Object.keys(order).forEach(
@@ -57,6 +58,19 @@ class OrderService {
       service_id: new ObjectId(service_id),
     });
   }
+
+  async findOrdersByDate(targetDate) {
+    // Chuyển đổi targetDate từ chuỗi ngày thành đối tượng Date (nếu cần)
+    // const dateObject = new Date(targetDate);
+
+    // Sử dụng phương thức find() để tìm các đơn hàng có service_id và ngày giống với targetDate
+    const orders = await this.find({
+      event_date: targetDate, // Điều này cần điều chỉnh tùy vào cấu trúc dữ liệu của bạn
+    });
+
+    return orders;
+  }
+
   async findOneOrderOfService(id, service_id) {
     return await this.Order.findOne({
       _id: ObjectId.isValid(id) ? new ObjectId(id) : null,
@@ -75,6 +89,17 @@ class OrderService {
     });
     // .sort({ createAt: 1 })
     // .lean();
+  }
+
+  async addSurcharges(orderId, data) {
+    const filter = {
+      _id: ObjectId.isValid(orderId) ? new ObjectId(orderId) : null,
+    };
+    const accept = await this.Order.findOneAndUpdate(
+      filter,
+      { $set: { surcharges: data, updateAt: new Date() } },
+      { returnDocument: "after" }
+    );
   }
   async acceptOrder(orderId) {
     const filter = {
@@ -105,6 +130,58 @@ class OrderService {
     const cancel = await this.Order.findOneAndUpdate(
       filter,
       { $set: { status: 3, updateAt: new Date() } },
+      { returnDocument: "after" }
+    );
+  }
+  async updateStatusUpdate(orderId, status) {
+    const filter = {
+      _id: ObjectId.isValid(orderId) ? new ObjectId(orderId) : null,
+    };
+    if (status == 1) {
+      const cancel = await this.Order.findOneAndUpdate(
+        filter,
+        {
+          $set: {
+            statusUpdate: 0,
+            updateAt: new Date(),
+          },
+        },
+        { returnDocument: "after" }
+      );
+    } else if (status == 0) {
+      const cancel2 = await this.Order.findOneAndUpdate(
+        filter,
+        {
+          $set: {
+            statusUpdate: 1,
+            updateAt: new Date(),
+          },
+        },
+        { returnDocument: "after" }
+      );
+    }
+  }
+
+  async updateInfoParty(orderId, info) {
+    const filter = {
+      _id: ObjectId.isValid(orderId) ? new ObjectId(orderId) : null,
+    };
+    const cancel = await this.Order.findOneAndUpdate(
+      filter,
+      {
+        $set: {
+          fullname: info.fullname,
+          email: info.email,
+          phone: info.phone,
+          event_date: info.event_date,
+          event_time: info.event_time,
+          address: info.address,
+          tray_quantity: info.tray_quantity,
+          total: info.total,
+          surcharges: info.surcharges,
+          updateAt: new Date(),
+        },
+      },
       { returnDocument: "after" }
     );
   }

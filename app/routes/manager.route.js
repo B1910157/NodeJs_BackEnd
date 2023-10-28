@@ -67,6 +67,8 @@ router.route("/job").post(job.create);
 router.route("/job/:jobId").get(job.findOneJob);
 router.route("/job").get(job.findAllJobOfService);
 
+router.route("/job/updateJob/:jobId").post(job.updateOnePostJob);
+
 //Change Image
 router.route("/changeImage").post(service.changeImage);
 

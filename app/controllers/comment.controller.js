@@ -1,17 +1,13 @@
-const JobService = require("../services/job.service");
+const CommentService = require("../services/comment.service");
 const MongoDB = require("../utils/mongodb.util");
 const ApiError = require("../api-error");
 
 exports.create = async (req, res, next) => {
-  let service_id;
-  service_id = req.service.id;
-  if (!req.body?.title) {
-    return next(new ApiError(400, "Title can not be empty!"));
-  }
   try {
-    const jobService = new JobService(MongoDB.client);
+    console.log("BODY CÓ 3 THỨ", req.body);
+    const commentService = new CommentService(MongoDB.client);
 
-    const document = await jobService.create(req.body, service_id);
+    const document = await commentService.create(req.body);
     return res.send(document);
   } catch (error) {
     return next(new ApiError(500, "An error occurred while creating the job!"));
@@ -65,13 +61,16 @@ exports.findOneJob = async (req, res, next) => {
   }
 };
 
-exports.findAllJobOfService = async (req, res, next) => {
-  let documents = [];
+exports.findAllCommentOfServiceReal = async (req, res, next) => {
   let service_id;
-  service_id = req.service.id;
+
+  service_id = req.params.service_id;
+  console.log("hihi nè", req.params);
   try {
-    const jobService = new JobService(MongoDB.client);
-    documents = await jobService.findAllJobOfService(service_id);
+    const commentService = new CommentService(MongoDB.client);
+    let documents = await commentService.findAllCommentOfService(service_id);
+    console.log("DỮ LIỆU", documents);
+    return res.send(documents);
   } catch (error) {
     return next(new ApiError(500, "An error occured while retrieving job!"));
   }

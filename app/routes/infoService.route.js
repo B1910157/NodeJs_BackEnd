@@ -8,5 +8,6 @@ const router = express.Router();
 
 router.route("/").get(info.findOneService).post(info.updateInfo);
 router.route("/:service_id").get(info.findOneService);
+router.route("/changePass").post(info.changePass);
 
 module.exports = router;

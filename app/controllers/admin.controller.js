@@ -30,6 +30,23 @@ exports.create = async (req, res, next) => {
   }
 };
 
+exports.findOneAdmin = async (req, res, next) => {
+  const userId = req.admin.id;
+  try {
+    const userService = new UserService(MongoDB.client);
+    console.log(userId);
+    console.log("sss aloooooooooooooooo");
+    const info = await userService.findById(userId);
+    console.log(info);
+
+    if (!info) {
+      return next(new ApiError(404, "User not found"));
+    }
+    return res.send(info);
+  } catch (error) {
+    return next(new ApiError(500, `Error updating user with userid=${userId}`));
+  }
+};
 exports.loginAdmin = async (req, res, next) => {
   console.log(req.body);
   if (!req.body?.username || !req.body?.password) {

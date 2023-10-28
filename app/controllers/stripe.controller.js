@@ -3,6 +3,23 @@ const keyStripe =
   "sk_test_51NN6emCgP1gVHhXPRRYjy19cMZAIq6VFZSyPvTvm56tz83RXK5FxEsr0UKPNLOCmqR2ouDSFu9W8S1a9JvXnYL5u00HRJ8gaXn";
 const stripe = require("stripe")(keyStripe);
 
+exports.getCustomerByEmail = async (req, res, next) => {
+  try {
+    const customers = await stripe.customers.list({
+      email: "tinteststripe@gmail.com",
+    });
+    if (customers && customers.data.length > 0) {
+      const customer = customers.data[0];
+      // Bạn có thể truy cập thông tin của khách hàng từ đây
+      console.log(customer.id);
+      return res.send(customer);
+    } else {
+      // Không tìm thấy khách hàng với địa chỉ email cụ thể
+      console.log("Không tìm thấy khách hàng.");
+    }
+  } catch (error) {}
+};
+
 //TODO
 exports.create_payment = async (req, res, next) => {
   try {

@@ -7,6 +7,11 @@ const router = express.Router();
 
 router.route("/").get(order.findAllOrderOfService);
 router.route("/:orderId").get(order.findOneOrderOfService);
+router.route("/findOrdersByDate").post(order.filterOrderByDate);
+
+//SURCHARGES
+router.route("/surcharges").post(order.surcharges);
+router.route("/reSendMail/:orderId").get(order.reSendMail);
 //ACCEPT
 router.route("/accept/:orderId").put(order.acceptOrder);
 //ADMIN CANCEL
@@ -46,6 +51,9 @@ router
 router
   .route("/removeOtherInOrder/:orderId/:otherId")
   .delete(order.removeOtherInOrder);
+
+// update info party
+router.route("/updateInfoParty/:orderId").post(order.updateInfoParty);
 
 // router.route("/cancelOrder/:orderId").get(order.cancelOrderUser);
 
