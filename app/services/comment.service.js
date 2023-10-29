@@ -1,5 +1,8 @@
 const { ObjectId } = require("mongodb");
 const ApiError = require("../api-error");
+const UserService = require("./user.service");
+const MongoDB = require("../utils/mongodb.util");
+const ServiceProvider = require("./serviceProvider");
 
 class CommentService {
   constructor(client) {
@@ -20,7 +23,7 @@ class CommentService {
     Object.keys(comment).forEach(
       (key) => comment[key] === undefined && delete comment[key]
     );
-    console.log("return", comment);
+
     return comment;
   }
 
@@ -36,14 +39,41 @@ class CommentService {
   }
 
   async findAllCommentOfService(service_id) {
-    return await this.find({
+    // return await this.find({
+    //   service_id: new ObjectId(service_id),
+    //   status: 1,
+    // });
+    const comments = await this.find({
       service_id: new ObjectId(service_id),
       status: 1,
     });
+
+    for (const comment of comments) {
+      const userService = new UserService(MongoDB.client);
+      const user = await userService.findById(comment.user_id);
+
+      if (user) {
+        comment.fullname = user.fullname;
+      }
+    }
+    return comments;
   }
   async findAllComment() {
-    const cmt = await this.Comment.find().toArray();
-    return cmt;
+    const comments = await this.Comment.find().toArray();
+    for (const comment of comments) {
+      const userService = new UserService(MongoDB.client);
+      const serviceService = new ServiceProvider(MongoDB.client);
+      const service = await serviceService.findById(comment.service_id);
+      const user = await userService.findById(comment.user_id);
+
+      if (user) {
+        comment.fullname = user.fullname;
+      }
+      if (service) {
+        comment.service_name = service.service_name;
+      }
+    }
+    return comments;
   }
 
   async updateStatus(id, status) {
@@ -67,7 +97,6 @@ class CommentService {
   }
 
   async findById(id) {
-    console.log("hi", id);
     return await this.Comment.findOne({
       _id: ObjectId.isValid(id) ? new ObjectId(id) : null,
     });
@@ -83,7 +112,7 @@ class CommentService {
       { $set: update },
       { returnDocument: "after" }
     );
-    console.log("rs", result);
+
     return result.value;
   }
 

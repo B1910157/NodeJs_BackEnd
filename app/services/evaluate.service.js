@@ -1,5 +1,7 @@
 const { ObjectId } = require("mongodb");
 const ApiError = require("../api-error");
+const UserService = require("./user.service");
+const MongoDB = require("../utils/mongodb.util");
 
 class EvaluateService {
   constructor(client) {
@@ -19,7 +21,7 @@ class EvaluateService {
     Object.keys(evaluate).forEach(
       (key) => evaluate[key] === undefined && delete evaluate[key]
     );
-    console.log("return", evaluate);
+
     return evaluate;
   }
 
@@ -33,36 +35,54 @@ class EvaluateService {
     const cursor = await this.Evaluate.find(filter);
     return await cursor.toArray();
   }
-  //   async updateStatus(id, status) {
-  //     const filter = {
-  //       _id: ObjectId.isValid(id) ? new ObjectId(id) : null,
-  //     };
-  //     if (status == 1) {
-  //       const cancel = await this.Evaluate.findOneAndUpdate(
-  //         filter,
-  //         { $set: { status: 0 } },
-  //         { returnDocument: "after" }
-  //       );
-  //     }
-  //     if (status == 0) {
-  //       const accept = await this.Evaluate.findOneAndUpdate(
-  //         filter,
-  //         { $set: { status: 1 } },
-  //         { returnDocument: "after" }
-  //       );
-  //     }
-  //   }
+  async findAllEvaluateOfService(service_id) {
+    const evaluates = await this.find({
+      service_id: new ObjectId(service_id),
+    });
+
+    for (const evaluate of evaluates) {
+      const userService = new UserService(MongoDB.client);
+      const user = await userService.findById(evaluate.user_id);
+
+      if (user) {
+        evaluate.fullname = user.fullname;
+      }
+    }
+    return evaluates;
+  }
+
+  async findAllEvaluate() {
+    const evaluates = await this.Evaluate.find().toArray();
+    for (const evaluate of evaluates) {
+      const userService = new UserService(MongoDB.client);
+      const user = await userService.findById(evaluate.user_id);
+
+      if (user) {
+        evaluate.fullname = user.fullname;
+      }
+    }
+    return evaluates;
+  }
 
   async findById(id) {
-    console.log("hi", id);
     return await this.Evaluate.findOne({
       _id: ObjectId.isValid(id) ? new ObjectId(id) : null,
     });
   }
-
-  async update(id, payload) {
+  async findByIdUser(id, service_id) {
+    return await this.Evaluate.findOne({
+      user_id: ObjectId.isValid(id) ? new ObjectId(id) : null,
+      service_id: ObjectId.isValid(service_id)
+        ? new ObjectId(service_id)
+        : null,
+    });
+  }
+  async update(id, service_id, payload) {
     const filter = {
-      _id: ObjectId.isValid(id) ? new ObjectId(id) : null,
+      user_id: ObjectId.isValid(id) ? new ObjectId(id) : null,
+      service_id: ObjectId.isValid(service_id)
+        ? new ObjectId(service_id)
+        : null,
     };
     const update = await this.extractEvaluateData(payload);
     const result = await this.Evaluate.findOneAndUpdate(
@@ -70,7 +90,7 @@ class EvaluateService {
       { $set: update },
       { returnDocument: "after" }
     );
-    console.log("rs", result);
+
     return result.value;
   }
 
