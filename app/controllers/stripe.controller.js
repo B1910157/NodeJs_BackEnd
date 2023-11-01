@@ -19,6 +19,34 @@ exports.getCustomerByEmail = async (req, res, next) => {
     }
   } catch (error) {}
 };
+exports.createSession = async (req, res, next) => {
+  try {
+    console.log("BODY", req.body);
+
+    // Tạo một session để lấy đường link thanh toán
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: "vnd",
+            product_data: {
+              name: "Thanh toán",
+            },
+            unit_amount: req.body.amount, // Giá sản phẩm (đơn vị cents, ví dụ 1000 là 10.00 USD)
+          },
+          quantity: 1,
+        },
+      ],
+      mode: "payment",
+      // success_url: `http://localhost:3001/payment/statusPayment=success&orderId=${req.body.orderId}`,
+      success_url: `http://localhost:3001/payment-success?statusPayment=success&orderId=${req.body.orderId}&amount=${req.body.amount}`,
+      cancel_url: `http://localhost:3001/payment-success?statusPayment=error&orderId=${req.body.orderId}`,
+    });
+    // console.log("url", session);
+    return res.send(session);
+  } catch (error) {}
+};
 
 //TODO
 exports.create_payment = async (req, res, next) => {

@@ -16,6 +16,9 @@ router.route("/getOne/:idPayment").get(payment.getOnePaymentById);
 router.route("/getAll").get(payment.getAllSuccessfulPayments);
 router.route("/addMoney").post(payment.addFundsToCustomer);
 
+//create session stripe
+router.route("/createSession").post(payment.createSession);
+
 //VN PAY
 router.route("/vnPay").post(vnPay.create_vnPayment);
 

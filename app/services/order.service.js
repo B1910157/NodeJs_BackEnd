@@ -58,14 +58,68 @@ class OrderService {
       service_id: new ObjectId(service_id),
     });
   }
+  async findAllOrderOfServiceByMonth(service_id) {
+    const ordersByMonth = await this.Order.aggregate([
+      {
+        $match: {
+          service_id: new ObjectId(service_id),
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createAt" },
+            month: { $month: "$createAt" },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: {
+          "_id.year": 1,
+          "_id.month": 1,
+        },
+      },
+    ]);
 
+    const result = await ordersByMonth.toArray();
+
+    return result;
+  }
+
+  async findAllOrderOfServiceSuccess(service_id) {
+    const ordersByMonth = await this.Order.aggregate([
+      {
+        $match: {
+          service_id: new ObjectId(service_id),
+          status: 1,
+          // status
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createAt" },
+            month: { $month: "$createAt" },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: {
+          "_id.year": 1,
+          "_id.month": 1,
+        },
+      },
+    ]);
+
+    const result = await ordersByMonth.toArray();
+
+    return result;
+  }
   async findOrdersByDate(targetDate) {
-    // Chuyển đổi targetDate từ chuỗi ngày thành đối tượng Date (nếu cần)
-    // const dateObject = new Date(targetDate);
-
-    // Sử dụng phương thức find() để tìm các đơn hàng có service_id và ngày giống với targetDate
     const orders = await this.find({
-      event_date: targetDate, // Điều này cần điều chỉnh tùy vào cấu trúc dữ liệu của bạn
+      event_date: targetDate,
     });
 
     return orders;

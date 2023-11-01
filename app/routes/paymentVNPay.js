@@ -1,4 +1,5 @@
 const express = require("express");
+const payment = require("../controllers/stripe.controller");
 const router = express.Router();
 function sortObject(obj) {
   var sorted = {};
@@ -132,5 +133,9 @@ router.get("/vnpay_return", function (req, res, next) {
     res.render("success", { code: "97" });
   }
 });
+
+//STRIPE
+//create session stripe
+router.route("/createSession").post(payment.createSession);
 
 module.exports = router;

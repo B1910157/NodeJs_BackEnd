@@ -6,10 +6,13 @@ const cart = require("../controllers/cart.controller");
 const food = require("../controllers/food.controller");
 const drink = require("../controllers/drink.controller");
 const other = require("../controllers/other.controller");
+const employ = require("../controllers/job.controller");
 
 const router = express.Router();
 
 router.route("/").get(service.findAllServiceShow);
+
+router.route("/employments").get(employ.findAllJobPublish);
 
 router
   .route("/findOneFood/:service_id/:foodId")

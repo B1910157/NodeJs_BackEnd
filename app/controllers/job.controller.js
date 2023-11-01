@@ -78,3 +78,23 @@ exports.findAllJobOfService = async (req, res, next) => {
 
   return res.send(documents);
 };
+exports.findAllJob = async (req, res, next) => {
+  try {
+    const jobService = new JobService(MongoDB.client);
+    documents = await jobService.findAllJob();
+    return res.send(documents);
+  } catch (error) {
+    return next(new ApiError(500, "An error occured while retrieving job!"));
+  }
+};
+exports.findAllJobPublish = async (req, res, next) => {
+  try {
+    const jobService = new JobService(MongoDB.client);
+    documents = await jobService.findAllJobPublish();
+    console.log("ducument", documents);
+
+    return res.send(documents);
+  } catch (error) {
+    return next(new ApiError(500, "An error occured while retrieving job!"));
+  }
+};

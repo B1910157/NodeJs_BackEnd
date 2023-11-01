@@ -6,7 +6,10 @@ const order = require("../controllers/order.controller");
 const router = express.Router();
 
 router.route("/").get(order.findAllOrderOfService);
+router.route("/findOrderByMonth").get(order.findAllOrderOfServiceByMonth);
+router.route("/findOrdersSuccess").get(order.findAllOrderOfServiceSuccess);
 router.route("/:orderId").get(order.findOneOrderOfService);
+
 router.route("/findOrdersByDate").post(order.filterOrderByDate);
 
 //SURCHARGES

@@ -315,10 +315,12 @@ exports.paymentWithUser = async (req, res, next) => {
   try {
     orderId = req.body.orderId;
     statusPayment = req.body.paymentMethod;
+    let amount = req.body.amount;
     console.log("Payment method: ", req.body);
     const orderService = new OrderService(MongoDB.client);
-    let amount = req.body.amount;
-    amount = amount / 100;
+    if (req.body.paymentMethod == "vnpay") {
+      amount = amount / 100;
+    }
     orderService.updateStatusPayment(orderId, statusPayment, amount);
     return res.send("update status payment successful");
   } catch (error) {}
@@ -424,6 +426,46 @@ exports.findAllOrderOfService = async (req, res, next) => {
     const orderService = new OrderService(MongoDB.client);
 
     const orders = await orderService.findAllOrderOfService(req.service.id);
+    orders.sort((a, b) => {
+      const dateA = new Date(a.updateAt);
+      const dateB = new Date(b.updateAt);
+      return dateB - dateA;
+    });
+
+    return res.send(orders);
+  } catch (error) {
+    return next(new ApiError(500, "Error find All order"));
+  }
+};
+
+exports.findAllOrderOfServiceByMonth = async (req, res, next) => {
+  try {
+    const orderService = new OrderService(MongoDB.client);
+
+    const orders = await orderService.findAllOrderOfServiceByMonth(
+      req.service.id
+    );
+    console.log(orders);
+    orders.sort((a, b) => {
+      const dateA = new Date(a.updateAt);
+      const dateB = new Date(b.updateAt);
+      return dateB - dateA;
+    });
+
+    return res.send(orders);
+  } catch (error) {
+    return next(new ApiError(500, "Error find All order"));
+  }
+};
+
+exports.findAllOrderOfServiceSuccess = async (req, res, next) => {
+  try {
+    const orderService = new OrderService(MongoDB.client);
+
+    const orders = await orderService.findAllOrderOfServiceSuccess(
+      req.service.id
+    );
+    console.log(orders);
     orders.sort((a, b) => {
       const dateA = new Date(a.updateAt);
       const dateB = new Date(b.updateAt);

@@ -1,6 +1,7 @@
 const { ObjectId } = require("mongodb");
 const ApiError = require("../api-error");
-
+const ServiceProvider = require("./serviceProvider");
+const MongoDB = require("../utils/mongodb.util");
 class JobService {
   constructor(client) {
     this.Job = client.db().collection("jobs");
@@ -50,6 +51,28 @@ class JobService {
       service_id: new ObjectId(service_id),
     });
   }
+
+  async findAllJobPublish() {
+    const rs = await this.Job.find({ status: 1 }).toArray();
+    for (const comment of rs) {
+      const serviceService = new ServiceProvider(MongoDB.client);
+      const service = await serviceService.findById(comment.service_id);
+
+      if (service) {
+        comment.service_name = service.service_name;
+        comment.phone = service.phone;
+        comment.email = service.email;
+        comment.image = service.image;
+      }
+    }
+    return rs;
+  }
+
+  async findAllJob() {
+    const rs = await this.Job.find().toArray();
+    return rs;
+  }
+
   // async findOneJobOfService(id, service_id) {
   //   return await this.Job.findOne({
   //     _id: ObjectId.isValid(id) ? new ObjectId(id) : null,
