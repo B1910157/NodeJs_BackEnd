@@ -445,6 +445,10 @@ class UserService {
     });
     return user;
   }
+  async findAllUser() {
+    const user = await this.User.find({}).toArray();
+    return user;
+  }
 
   //cap nhat thong tin ca nhân
   async updateUserInfo(userId, newInfo) {

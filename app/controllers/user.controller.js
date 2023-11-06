@@ -366,6 +366,18 @@ exports.findAllOfUser = async (req, res, next) => {
   }
 };
 
+exports.countUser = async (req, res, next) => {
+  try {
+    const userService = new UserService(MongoDB.client);
+    const users = await userService.findAllUser();
+    // console.log("hello", users);
+    // count = users.length;
+    return res.send(users);
+  } catch (error) {
+    return next(new ApiError(500, "An error occurred while retrieving orders"));
+  }
+};
+
 //***quan trọng */
 exports.findFoodInCartOfUser = async (req, res, next) => {
   let info = [];
@@ -404,4 +416,3 @@ exports.addOrder = async (req, res, next) => {
     );
   }
 };
-

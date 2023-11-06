@@ -11,6 +11,7 @@ class OrderService {
     const order = {
       service_id: new ObjectId(payload.cart.service_id),
       user_id: payload.user_id ? new ObjectId(payload.user_id) : null,
+      type_party: payload.type_party,
       event_date: payload.event_date,
       event_time: payload.event_time,
       tray_quantity: parseInt(payload.tray_quantity),
@@ -58,6 +59,66 @@ class OrderService {
       service_id: new ObjectId(service_id),
     });
   }
+  async findAllOrderTogetDeposit() {
+    return await this.find({});
+  }
+
+  async findAllOrder() {
+    const ordersByMonth = await this.Order.aggregate([
+      {
+        $match: {},
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createAt" },
+            month: { $month: "$createAt" },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: {
+          "_id.year": 1,
+          "_id.month": 1,
+        },
+      },
+    ]);
+
+    const result = await ordersByMonth.toArray();
+
+    return result;
+  }
+  async findAllOrderSuccess() {
+    const ordersByMonth = await this.Order.aggregate([
+      {
+        $match: {
+          status: 1,
+          // status
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createAt" },
+            month: { $month: "$createAt" },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: {
+          "_id.year": 1,
+          "_id.month": 1,
+        },
+      },
+    ]);
+
+    const result = await ordersByMonth.toArray();
+
+    return result;
+  }
+
   async findAllOrderOfServiceByMonth(service_id) {
     const ordersByMonth = await this.Order.aggregate([
       {
@@ -226,6 +287,7 @@ class OrderService {
         $set: {
           fullname: info.fullname,
           email: info.email,
+          type_party: info.type_party,
           phone: info.phone,
           event_date: info.event_date,
           event_time: info.event_time,

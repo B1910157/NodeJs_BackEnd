@@ -440,11 +440,63 @@ exports.findAllOrderOfService = async (req, res, next) => {
 
 exports.findAllOrderOfServiceByMonth = async (req, res, next) => {
   try {
+    let service_id = "";
+    if (req.service) {
+      service_id = req.service.id;
+    } else {
+      service_id = req.params.service_id;
+    }
     const orderService = new OrderService(MongoDB.client);
 
-    const orders = await orderService.findAllOrderOfServiceByMonth(
-      req.service.id
-    );
+    const orders = await orderService.findAllOrderOfServiceByMonth(service_id);
+    console.log(orders);
+    orders.sort((a, b) => {
+      const dateA = new Date(a.updateAt);
+      const dateB = new Date(b.updateAt);
+      return dateB - dateA;
+    });
+
+    return res.send(orders);
+  } catch (error) {
+    return next(new ApiError(500, "Error find All order"));
+  }
+};
+
+exports.findAllOrderByMonth = async (req, res, next) => {
+  try {
+    const orderService = new OrderService(MongoDB.client);
+
+    const orders = await orderService.findAllOrder();
+    console.log(orders);
+    orders.sort((a, b) => {
+      const dateA = new Date(a.updateAt);
+      const dateB = new Date(b.updateAt);
+      return dateB - dateA;
+    });
+
+    return res.send(orders);
+  } catch (error) {
+    return next(new ApiError(500, "Error find All order"));
+  }
+};
+
+exports.findAllOrderToGetDeposit = async (req, res, next) => {
+  try {
+  
+    const orderService = new OrderService(MongoDB.client);
+    const orders = await orderService.findAllOrderTogetDeposit();
+    
+    return res.send(orders);
+  } catch (error) {
+    return next(new ApiError(500, "Error find All order"));
+  }
+};
+
+exports.findAllOrderSuccess = async (req, res, next) => {
+  try {
+    const orderService = new OrderService(MongoDB.client);
+
+    const orders = await orderService.findAllOrderSuccess();
     console.log(orders);
     orders.sort((a, b) => {
       const dateA = new Date(a.updateAt);
@@ -460,11 +512,15 @@ exports.findAllOrderOfServiceByMonth = async (req, res, next) => {
 
 exports.findAllOrderOfServiceSuccess = async (req, res, next) => {
   try {
+    let service_id = "";
+    if (req.service) {
+      service_id = req.service.id;
+    } else {
+      service_id = req.params.service_id;
+    }
     const orderService = new OrderService(MongoDB.client);
 
-    const orders = await orderService.findAllOrderOfServiceSuccess(
-      req.service.id
-    );
+    const orders = await orderService.findAllOrderOfServiceSuccess(service_id);
     console.log(orders);
     orders.sort((a, b) => {
       const dateA = new Date(a.updateAt);

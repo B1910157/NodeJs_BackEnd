@@ -7,6 +7,7 @@ const router = express.Router();
 router.route("/comment/:service_id").get(comment.findAllCommentOfServiceReal);
 router.route("/comment").post(comment.create);
 router.route("/comment").get(comment.findAllComment);
+router.route("/comment").put(comment.updateStatus);
 
 //EVALUATE
 router

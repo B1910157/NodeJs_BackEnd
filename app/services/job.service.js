@@ -57,8 +57,9 @@ class JobService {
     for (const comment of rs) {
       const serviceService = new ServiceProvider(MongoDB.client);
       const service = await serviceService.findById(comment.service_id);
-
-      if (service) {
+      if (service.status != 1) {
+        return [];
+      } else if (service && service.status == 1) {
         comment.service_name = service.service_name;
         comment.phone = service.phone;
         comment.email = service.email;

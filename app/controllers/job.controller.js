@@ -98,3 +98,4 @@ exports.findAllJobPublish = async (req, res, next) => {
     return next(new ApiError(500, "An error occured while retrieving job!"));
   }
 };
+//TODO HIDDEN JOB, PUBLISH JOB

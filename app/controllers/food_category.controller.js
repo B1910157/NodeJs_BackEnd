@@ -3,7 +3,7 @@ const MongoDB = require("../utils/mongodb.util");
 const ApiError = require("../api-error");
 
 exports.create = async (req, res, next) => {
-    console.log("body:",req.body);
+    console.log("body12:",req.body);
     if (!req.body?.food_category) {
         return next(new ApiError(400, "Food Category Name can not be empty!"));
     }
@@ -27,7 +27,7 @@ exports.findAll = async (req, res, next) => {
         const foodcategoryService = new FoodCategoryService(MongoDB.client);
         // const {food_category} = req.query;
         documents = await foodcategoryService.find();
-       
+        
             
     } catch (error) {
         return next(
