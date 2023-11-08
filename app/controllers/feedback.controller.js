@@ -21,12 +21,12 @@ exports.createFeedBack = async (req, res, next) => {
 
 exports.findAllFeedBack = async (req, res, next) => {
   let documents = [];
-
+  console.log("tới đây, alo");
   try {
     const feedbackservice = new FeedBackService(MongoDB.client);
 
     documents = await feedbackservice.findAllFeedBack();
-
+    console.log("dou", documents);
     return res.send(documents);
   } catch (error) {
     return next(new ApiError(500, "An error occured while retrieving contact"));
@@ -35,15 +35,14 @@ exports.findAllFeedBack = async (req, res, next) => {
 
 exports.findAllFeedBackHasName = async (req, res, next) => {
   let documents = [];
- 
+
   try {
-   
     const feedbackservice = new FeedBackService(MongoDB.client);
-  
+
     // const userId = req.user.id;
 
     documents = await feedbackservice.findFeedbackOfUser();
-    
+
     return res.send(documents);
   } catch (error) {
     return next(new ApiError(500, "errror lấy feedback có tên user"));

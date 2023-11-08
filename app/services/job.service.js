@@ -20,7 +20,7 @@ class JobService {
       area: payload.area,
       deadline: payload.deadline,
       list: [],
-      status: 0,
+      status: 1 ,
     };
 
     Object.keys(job).forEach(

@@ -99,3 +99,19 @@ exports.findAllJobPublish = async (req, res, next) => {
   }
 };
 //TODO HIDDEN JOB, PUBLISH JOB
+exports.updateStatusPost = async (req, res, next) => {
+  try {
+
+    const jobService = new JobService(MongoDB.client);
+    if (req.body.status == 0) {
+      await jobService.publishPost(req.body.jobId);
+    } else if (req.body.status == 1) {
+      await jobService.hiddenPost(req.body.jobId);
+    } else {
+      return res.send("Không thành công");
+    }
+    return res.send("Thành công");
+  } catch (error) {
+    return next(new ApiError(500, "An error occured while retrieving job!"));
+  }
+};
