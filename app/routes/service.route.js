@@ -26,7 +26,6 @@ router.route("/logout").post(service.logout);
 
 // router.route("/update_support_area").post(service.updateSupportArea)
 
-// router.route("/:service_id")
-//     .get(service.findOneService);
+router.route("/:service_id").get(service.findOneService);
 
 module.exports = router;

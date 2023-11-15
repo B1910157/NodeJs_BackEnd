@@ -1,7 +1,10 @@
 const express = require("express");
 const cors = require("cors");
+
 const ApiError = require("./app/api-error");
 const multer = require("multer");
+const http = require("http");
+const socketIO = require("socket.io");
 
 const paymentRoute = require("./app/routes/payment.js");
 const paymentVNPayRoute = require("./app/routes/paymentVNPay.js");
@@ -23,6 +26,7 @@ const cartRoute = require("./app/routes/cart.route");
 const itemsRoute = require("./app/routes/items.route");
 const infoServiceRoute = require("./app/routes/infoService.route");
 const commentAndEvaluate = require("./app/routes/commentAndEvaluate.route");
+const chatServiceRoute = require("./app/routes/userChat.route.js");
 
 const checkUser = require("./app/middlewares/check_user");
 const checkService = require("./app/middlewares/checkService.js");
@@ -32,6 +36,27 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static("public/images"));
+
+const server = http.createServer(app); // Tạo server HTTP
+
+// const io = socketIO(server);
+const io = socketIO(server, {
+  cors: {
+    origin: (origin, callback) => {
+      // Kiểm tra nếu origin nằm trong danh sách các địa chỉ được phép
+      const allowedOrigins = [
+        "http://localhost:3001",
+        "http://localhost:3003" /* thêm các địa chỉ khác nếu cần */,
+      ];
+      if (allowedOrigins.includes(origin) || !origin) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: ["GET", "POST"],
+  },
+});
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to Project. This is PartyPLanner." });
@@ -51,6 +76,10 @@ const upload = multer({
 });
 
 app.use("/api/users", userRoute);
+
+//user chat with service
+app.use("/api/userChat", checkUser, chatServiceRoute);
+
 app.use("/api/admin", adminRoute);
 app.use("/api/adminInfo", checkAdmin, adminInfoRoute);
 app.use("/api/services", serviceRoute);
@@ -87,6 +116,40 @@ app.use((error, req, res, next) => {
   return res.status(error.statusCode || 500).json({
     message: error.message || "Internal Server Error",
   });
+});
+
+// Namespace cho cổng 3001
+const namespace3001 = io.of("/namespace");
+namespace3001.on("connection", (socket) => {
+  console.log("User connected to namespace3001");
+
+  socket.on("chat message", (msg) => {
+    namespace3001.emit("chat message", msg);
+    console.log("user 1 chat", msg);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected from namespace3001");
+  });
+});
+
+// Namespace cho cổng 3003
+const namespace3003 = io.of("/namespace");
+namespace3003.on("connection", (socket) => {
+  console.log("User connected to namespace3003");
+
+  socket.on("chat message", (msg) => {
+    // namespace3003.emit("chat message service", msg);
+    console.log("user 2 chat", msg);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected from namespace3003");
+  });
+});
+
+server.listen(3009, () => {
+  console.log("Server socket IO listening on port 3009");
 });
 
 module.exports = app;

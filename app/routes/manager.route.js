@@ -6,6 +6,8 @@ const food = require("../controllers/food.controller");
 const drink = require("../controllers/drink.controller");
 const other = require("../controllers/other.controller");
 const job = require("../controllers/job.controller");
+const chat = require("../controllers/chat.controller");
+const chat_with_socket = require("../controllers/chat_with_socket.controller");
 
 const { route } = require("./service.route");
 
@@ -73,4 +75,19 @@ router.route("/job/updateStatus").put(job.updateStatusPost);
 //Change Image
 router.route("/changeImage").post(service.changeImage);
 
+//CHAT WITH USER
+router.route("/chat").post(chat.createWithService);
+router.route("/chat").put(chat.findContentInOneChatForService);
+router.route("/chat").get(chat.getAllChatsForService);
+router
+  .route("/chat/getQuantityNewChat")
+  .get(chat.getQuantityNewChatWithService);
+
+router.route("/chat/chat_with_socket").post(chat_with_socket.createWithService);
+router
+  .route("/chat/chat_with_socket")
+  .get(chat_with_socket.getAllChatsForService);
+router
+  .route("/chat/chat_with_socket")
+  .put(chat_with_socket.findContentInOneChatForService);
 module.exports = router;

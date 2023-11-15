@@ -63,6 +63,10 @@ class UserService {
     const user = await this.User.findOne({ username: username, admin: 0 });
     return user;
   }
+  async findEmail(email) {
+    const user = await this.User.findOne({ email: email });
+    return user;
+  }
   async findAdmin(username) {
     const user = await this.User.findOne({ username: username, admin: 1 });
     // console.log("hi", user);

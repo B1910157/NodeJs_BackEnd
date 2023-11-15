@@ -20,6 +20,11 @@ exports.create = async (req, res, next) => {
 
   try {
     const userService = new UserService(MongoDB.client);
+    const checkUsername = userService.findUsername(req.body.username);
+    const checkEmail = userService.findEmail(req.body.email);
+    if (checkEmail || checkUsername) {
+      return res.send({ message: "Email hoặc username đã được sử dụng" });
+    }
     const document = await userService.create(req.body);
     return res.send(document);
     // return res.send(`Inserted new user have Id: ${document.insertedId}`);

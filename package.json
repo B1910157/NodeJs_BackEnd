@@ -23,6 +23,7 @@
     "nodemailer": "^6.9.5",
     "qs": "^6.11.2",
     "sha256": "^0.2.0",
+    "socket.io": "^4.7.2",
     "stripe": "^13.9.0"
   },
   "devDependencies": {
