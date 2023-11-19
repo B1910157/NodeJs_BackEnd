@@ -20,7 +20,7 @@ const checkUser = (req, res, next) => {
             return next(new ApiError(401, "Unauthorized: invalid token"));
         }
         req.user = decoded;
-        console.log("decoded: ",decoded)
+        // console.log("decoded: ",decoded)
         next();
     });
 }

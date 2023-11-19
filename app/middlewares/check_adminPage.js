@@ -19,7 +19,7 @@ const checkAdminPage = (req, res, next) => {
       return next(new ApiError(401, "Unauthorized: invalid token"));
     }
     req.admin = decoded;
-    console.log("decoded: ", decoded);
+    // console.log("decoded: ", decoded);
     next();
   });
 };

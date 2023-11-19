@@ -118,36 +118,54 @@ app.use((error, req, res, next) => {
   });
 });
 
-// Namespace cho cổng 3001
-const namespace3001 = io.of("/namespace");
-namespace3001.on("connection", (socket) => {
-  console.log("User connected to namespace3001");
+// // Namespace cho cổng 3001
+// const namespace3001 = io.of("/namespace");
+// namespace3001.on("connection", (socket) => {
+//   console.log("User connected to namespace3001");
+
+//   socket.on("chat message", (msg) => {
+//     namespace3001.emit("chat message", msg);
+//     console.log("user 1 chat", msg);
+//   });
+
+//   socket.on("disconnect", () => {
+//     console.log("User disconnected from namespace3001");
+//   });
+// });
+
+// // Namespace cho cổng 3003
+// const namespace3003 = io.of("/namespace");
+// namespace3003.on("connection", (socket) => {
+//   console.log("User connected to namespace3003");
+
+//   socket.on("chat message", (msg) => {
+//     // namespace3003.emit("chat message service", msg);
+//     console.log("user 2 chat", msg);
+//   });
+
+//   socket.on("disconnect", () => {
+//     console.log("User disconnected from namespace3003");
+//   });
+// });
+
+io.on("connection", (socket) => {
+  console.log(`User ${socket.id} connected`);
+
+  socket.on("join", (roomId) => {
+    socket.join(roomId);
+    console.log(`User ${socket.id} joined room ${roomId}`);
+  });
 
   socket.on("chat message", (msg) => {
-    namespace3001.emit("chat message", msg);
-    console.log("user 1 chat", msg);
+    // Gửi tin nhắn đến phòng tương ứng
+    io.to(msg.roomId).emit("chat message", msg);
+    console.log(`User ${socket.id} sent a message to room ${msg.roomId}`);
   });
 
   socket.on("disconnect", () => {
-    console.log("User disconnected from namespace3001");
+    console.log(`User ${socket.id} disconnected`);
   });
 });
-
-// Namespace cho cổng 3003
-const namespace3003 = io.of("/namespace");
-namespace3003.on("connection", (socket) => {
-  console.log("User connected to namespace3003");
-
-  socket.on("chat message", (msg) => {
-    // namespace3003.emit("chat message service", msg);
-    console.log("user 2 chat", msg);
-  });
-
-  socket.on("disconnect", () => {
-    console.log("User disconnected from namespace3003");
-  });
-});
-
 server.listen(3009, () => {
   console.log("Server socket IO listening on port 3009");
 });

@@ -21,7 +21,7 @@ const checkService = (req, res, next) => {
         }
         req.service = decoded;
         // console.log("req", req)
-        console.log("decoded:(req.service) ",decoded)
+        // console.log("decoded:(req.service) ",decoded)
         next();
     });
 }

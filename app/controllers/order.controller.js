@@ -246,11 +246,7 @@ exports.acceptOrder = async (req, res, next) => {
     <a href="http://localhost:3001/notification/${orderId}" style="text-decoration: none; color: white;">Hủy</a>
   </button>`;
 
-    sendEmail(
-      "tinb1910157@student.ctu.edu.vn",
-      "Phản hồi yêu cầu đặt tiệc",
-      content
-    );
+    sendEmail(order.email, "Phản hồi yêu cầu đặt tiệc", content);
     return res.send("Accept order successful");
   } catch (error) {}
 };
@@ -293,11 +289,7 @@ exports.cancelOrder = async (req, res, next) => {
     content +=
       "Vui lòng thử lại hoặc liên hệ đến chủ dịch vụ <br> Trân trọng!!!";
     //SEND MAIL CANCEL ORDER WITH REASON
-    sendEmail(
-      "tinb1910157@student.ctu.edu.vn",
-      "Phản hồi yêu cầu đặt tiệc",
-      content
-    );
+    sendEmail(order.email, "Phản hồi yêu cầu đặt tiệc", content);
     return res.send("cancel order successful");
   } catch (error) {}
 };
@@ -482,10 +474,9 @@ exports.findAllOrderByMonth = async (req, res, next) => {
 
 exports.findAllOrderToGetDeposit = async (req, res, next) => {
   try {
-  
     const orderService = new OrderService(MongoDB.client);
     const orders = await orderService.findAllOrderTogetDeposit();
-    
+
     return res.send(orders);
   } catch (error) {
     return next(new ApiError(500, "Error find All order"));
@@ -1099,7 +1090,7 @@ exports.reSendMail = async (req, res, next) => {
     <a href="http://localhost:3001/notification/${orderId}" style="text-decoration: none; color: white;">Hủy</a>
   </button>`;
 
-    sendEmail("tinb1910157@student.ctu.edu.vn", Title, content);
+    sendEmail(order.email, Title, content);
     const updateStatusUpdate = orderService.updateStatusUpdate(order._id, 1);
     return res.send("Accept order successful");
   } catch (error) {}
