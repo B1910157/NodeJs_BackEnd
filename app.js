@@ -1,9 +1,9 @@
 const express = require("express");
-const cors = require("cors");
+const cors = require("cors"); //cho phép hoặc từ chối các yêu cầu từ các trang web khác origin
 
 const ApiError = require("./app/api-error");
-const multer = require("multer");
-const http = require("http");
+const multer = require("multer"); //middleware cho express => xử lý upload file từ client
+const http = require("http"); //xư lý các yêu cầu và phản hồi (req, res)
 const socketIO = require("socket.io");
 
 const paymentRoute = require("./app/routes/payment.js");
@@ -46,7 +46,7 @@ const io = socketIO(server, {
       // Kiểm tra nếu origin nằm trong danh sách các địa chỉ được phép
       const allowedOrigins = [
         "http://localhost:3001",
-        "http://localhost:3003" /* thêm các địa chỉ khác nếu cần */,
+        "http://localhost:3003" 
       ];
       if (allowedOrigins.includes(origin) || !origin) {
         callback(null, true);
@@ -104,8 +104,6 @@ app.use("/api/paymentVNpay", paymentVNPayRoute);
 
 // handle 404 response
 app.use((req, res, next) => {
-  // Code ở đây sẽ chạy khi không có route được định nghĩa nào
-  // khớp với yêu cầu. Gọi next() để chuyển sang middleware xử lý lỗi
   return next(new ApiError(404, "Resource not found"));
 });
 // define error-handling middleware last, after other app.use() and routes calls
