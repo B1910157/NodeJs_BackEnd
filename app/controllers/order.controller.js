@@ -253,7 +253,7 @@ exports.acceptOrder = async (req, res, next) => {
 
 exports.orderUserCancel = async (req, res, next) => {
   try {
-    console.log("hihihihi", req.body, req.params.id, req.params.email);
+    // console.log("hihihihi", req.body, req.params.id, req.params.email);
     const orderId = req.params.id;
     // const order = await orderService.findById(orderId);
     email = req.params.email;

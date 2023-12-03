@@ -2,7 +2,7 @@ const DrinkService = require("../services/drink.service");
 const MongoDB = require("../utils/mongodb.util");
 const ApiError = require("../api-error");
 const path = require("path");
-const fs = require("fs");
+const fs = require("fs"); //file system (đọc và ghi tệp, kiểm tra sự tồn tại của tệp, xóa tệp)
 
 exports.create = async (req, res, next) => {
   let service_id;

@@ -2,7 +2,8 @@
 const bcrypt = require("bcrypt");
 const { ObjectId } = require("mongodb");
 const ApiError = require("../api-error");
-
+const OrderService = require("./order.service");
+const MongoDB = require("../utils/mongodb.util");
 class ServiceProvider {
   constructor(client) {
     this.Service = client.db().collection("services");
@@ -156,13 +157,32 @@ class ServiceProvider {
   // }
 
   async findAllService() {
-    const service = await this.Service.find().toArray();
-    return service;
+    const services = await this.Service.find().toArray();
+
+    return services;
   }
 
   async findAllServiceShow() {
-    const service = await this.Service.find({ status: 1 }).toArray();
-    return service;
+    const services = await this.Service.find({ status: 1 }).toArray();
+
+    const servicesWithOrderCount = await Promise.all(
+      services.map(async (service) => {
+        const orderService = new OrderService(MongoDB.client);
+        const orders = await orderService.findAllOrderOfService(service._id);
+
+        const orderCount = orders.length;
+        console.log("heloo", orderCount);
+
+        return { ...service, orderCount };
+      })
+    );
+    // return services;
+    const sortedServices = servicesWithOrderCount.sort(
+      (a, b) => b.orderCount - a.orderCount
+    );
+    console.log("heloo", sortedServices);
+    return sortedServices;
+    // return service;
   }
 
   async findEmail(email) {

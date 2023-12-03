@@ -29,6 +29,7 @@ class OrderService {
       statusPayment: 0,
       paymentMethod: payload.paymentMethod || "",
       statusUpdate: 0,
+      surcharges: [],
     };
 
     Object.keys(order).forEach(
@@ -55,6 +56,7 @@ class OrderService {
     });
   }
   async findAllOrderOfService(service_id) {
+    console.log("hello1999")
     return await this.find({
       service_id: new ObjectId(service_id),
     });

@@ -199,14 +199,8 @@ exports.findOneOrder = async (req, res, next) => {
 exports.findOneOrderAdmin = async (req, res, next) => {
   try {
     const orderId = req.params.id;
-    console.log("conta", orderId);
-
     const userService = new UserService(MongoDB.client);
-
-    console.log("hi");
     const order = await userService.findOrderById(orderId);
-    console.log("aa");
-    console.log("findOne2", order);
     if (!order) {
       return next(new ApiError(404, "order not found"));
     }
@@ -255,22 +249,14 @@ exports.cancelOrderUser = async (req, res, next) => {
 exports.acceptOrder = async (req, res, next) => {
   try {
     const userId = req.params.userId;
-    console.log("userId", userId);
     const orderId = req.params.orderId;
-    console.log("conta", orderId);
-
     const userService = new UserService(MongoDB.client);
 
-    console.log("hi");
     const order = await userService.findOrderById(orderId);
     if (!order) {
       return next(new ApiError(404, "order not found"));
     }
-    console.log("aa");
-    console.log("findOne3", order);
     const status = await userService.updateOrderStatus(userId, orderId);
-    console.log("st", status);
-
     return res.send(order);
   } catch (error) {
     return next(

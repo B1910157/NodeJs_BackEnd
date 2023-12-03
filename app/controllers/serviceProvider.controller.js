@@ -335,15 +335,17 @@ exports.findAllService = async (req, res, next) => {
     return next(new ApiError(500, "findAllService error"));
   }
 };
+
+//get all service
 exports.findAllServiceShow = async (req, res, next) => {
   try {
     const serviceProvider = new ServiceProvider(MongoDB.client);
     const document = await serviceProvider.findAllServiceShow();
-    document.sort((a, b) => {
-      const dateA = new Date(a.updateAt);
-      const dateB = new Date(b.updateAt);
-      return dateB - dateA;
-    });
+    // document.sort((a, b) => {
+    //   const dateA = new Date(a.updateAt);
+    //   const dateB = new Date(b.updateAt);
+    //   return dateB - dateA;
+    // });
     return res.send(document);
     // return res.send(`Inserted new service have Id: ${document.insertedId}`);
   } catch (error) {

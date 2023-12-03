@@ -91,8 +91,11 @@ exports.findAllJobPublish = async (req, res, next) => {
   try {
     const jobService = new JobService(MongoDB.client);
     documents = await jobService.findAllJobPublish();
-    console.log("ducument", documents);
-
+    documents.sort((a, b) => {
+      const dateA = new Date(a.updateAt);
+      const dateB = new Date(b.updateAt);
+      return dateB - dateA;
+    });
     return res.send(documents);
   } catch (error) {
     return next(new ApiError(500, "An error occured while retrieving job!"));
@@ -101,7 +104,6 @@ exports.findAllJobPublish = async (req, res, next) => {
 //TODO HIDDEN JOB, PUBLISH JOB
 exports.updateStatusPost = async (req, res, next) => {
   try {
-
     const jobService = new JobService(MongoDB.client);
     if (req.body.status == 0) {
       await jobService.publishPost(req.body.jobId);

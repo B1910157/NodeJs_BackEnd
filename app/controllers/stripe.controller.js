@@ -19,10 +19,10 @@ exports.getCustomerByEmail = async (req, res, next) => {
     }
   } catch (error) {}
 };
+
+//THIS FUNCTION WAS USING
 exports.createSession = async (req, res, next) => {
   try {
-    console.log("BODY", req.body);
-
     // Tạo một session để lấy đường link thanh toán
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -33,7 +33,7 @@ exports.createSession = async (req, res, next) => {
             product_data: {
               name: "Thanh toán",
             },
-            unit_amount: req.body.amount, // Giá sản phẩm (đơn vị cents, ví dụ 1000 là 10.00 USD)
+            unit_amount: req.body.amount,
           },
           quantity: 1,
         },

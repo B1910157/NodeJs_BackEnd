@@ -26,7 +26,12 @@ exports.findAllFeedBack = async (req, res, next) => {
     const feedbackservice = new FeedBackService(MongoDB.client);
 
     documents = await feedbackservice.findAllFeedBack();
-    console.log("dou", documents);
+
+    documents.sort((a, b) => {
+      const dateA = new Date(a.date_feedback);
+      const dateB = new Date(b.date_feedback);
+      return dateB - dateA;
+    });
     return res.send(documents);
   } catch (error) {
     return next(new ApiError(500, "An error occured while retrieving contact"));

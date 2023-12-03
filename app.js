@@ -44,10 +44,7 @@ const io = socketIO(server, {
   cors: {
     origin: (origin, callback) => {
       // Kiểm tra nếu origin nằm trong danh sách các địa chỉ được phép
-      const allowedOrigins = [
-        "http://localhost:3001",
-        "http://localhost:3003" 
-      ];
+      const allowedOrigins = ["http://localhost:3001", "http://localhost:3003"];
       if (allowedOrigins.includes(origin) || !origin) {
         callback(null, true);
       } else {
@@ -146,17 +143,24 @@ app.use((error, req, res, next) => {
 //   });
 // });
 
+// Xử lý sự kiện khi một máy khách kết nối đến máy chủ.
 io.on("connection", (socket) => {
   console.log(`User ${socket.id} connected`);
 
+  // Xử lý sự kiện khi máy khách gửi yêu cầu tham gia một phòng cụ thể
+  //Phương thức tham gia phòng
   socket.on("join", (roomId) => {
     socket.join(roomId);
     console.log(`User ${socket.id} joined room ${roomId}`);
-  });
 
+  });
+  // Xử lý sự kiện gửi một tin nhắn. Tin nhắn này sau đó được gửi đến người dùng trong phòng tương ứng
+  //Phương thức gửi tin nhắn
   socket.on("chat message", (msg) => {
     // Gửi tin nhắn đến phòng tương ứng
     io.to(msg.roomId).emit("chat message", msg);
+
+
     console.log(`User ${socket.id} sent a message to room ${msg.roomId}`);
   });
 
