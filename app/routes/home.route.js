@@ -18,6 +18,8 @@ router
   .route("/findOneFood/:service_id/:foodId")
   .get(service.findOneFoodWithUser);
 
+router.route("/registerService").post(service.create);
+
 //CHOOSE SERVICE
 router.route("/chooseService/:service_id").get(cart.chooseService);
 router.route("/unChoose").put(cart.removeService);

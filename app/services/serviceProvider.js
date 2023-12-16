@@ -20,7 +20,7 @@ class ServiceProvider {
       password: hashPass,
       bank_name: payload.bank_name || "",
       card_number: payload.card_number || "",
-      status: 0,
+      status: payload.status || 0,
       support_area: payload.support_area,
       support_party_type: payload.support_party_type,
       // foods: payload.food || [],
@@ -73,6 +73,14 @@ class ServiceProvider {
       const result = await this.Service.findOneAndUpdate(
         filter,
         { $set: { status: 0, updateAt: new Date() } },
+        { returnDocument: "after" }
+      );
+      return result.value;
+    } else if (status == 3) {
+      // const update = this.extractServiceData(payload);
+      const result = await this.Service.findOneAndUpdate(
+        filter,
+        { $set: { status: 1, updateAt: new Date() } },
         { returnDocument: "after" }
       );
       return result.value;

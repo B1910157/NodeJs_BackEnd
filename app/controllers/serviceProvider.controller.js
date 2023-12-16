@@ -63,11 +63,23 @@ exports.create = async (req, res, next) => {
     return next(new ApiError(400, "Password can not be empty"));
   }
   if (!req.body?.support_area || !req.body?.support_party_type) {
-    return next(
-      new ApiError(400, "support area or support party type not be empty")
-    );
+    // return next(
+    //   new ApiError(400, "support area or support party type not be empty")
+    // );
+    req.body.support_area = "";
+    req.body.support_party_type = "";
   }
   try {
+    const address =
+      req.body.address_detail +
+      ", " +
+      req.body.wardName +
+      ", " +
+      req.body.districtName +
+      ", " +
+      req.body.provinceName;
+    req.body.address = address;
+    req.body.status = 3;
     const serviceProvider = new ServiceProvider(MongoDB.client);
 
     const document = await serviceProvider.create(req.body);
@@ -83,10 +95,12 @@ exports.adminCreate = async (req, res, next) => {
   if (!req.body?.email) {
     return next(new ApiError(400, "Email can not be empty"));
   }
+
   const serviceProvider = new ServiceProvider(MongoDB.client);
   const service = await serviceProvider.findEmail(req.body.email);
+  console.log("mail", req.body.email, service);
   if (service) {
-    return res.send({ status: 400, message: "Email đã được sử dụng" });
+    return res.send({ status: 400, message: "Email đã được sử dụng nè" });
   }
   const randomPassword = generateRandomPassword(10);
   if (!req.body?.password) {
@@ -306,7 +320,25 @@ exports.updateStatus = async (req, res, next) => {
 
     const serviceProvider = new ServiceProvider(MongoDB.client);
     const service = await serviceProvider.findById(req.body.serviceId);
+
     if (service) {
+      if (service.status == 3) {
+        let content =
+          "ĐĂNG KÝ DỊCH VỤ HỖ TRỢ TIỆC LƯU ĐỘNG THÀNH CÔNG <br>" +
+          "Vui lòng truy cập vào http://localhost:3003  tùy chỉnh thông tin để có thể hoạt động trên website <br>" +
+          "<b>Tài khoản của bạn: </b> <br>" +
+          "<b>Email: </b>" +
+          service.email +
+          "<br>" +
+          "<b>Mật khẩu: </b>" +
+          "Đã đăng ký trước đó" +
+          "<br>";
+        sendEmail(
+          "tinb1910157@student.ctu.edu.vn",
+          "ĐĂNG KÝ TÀI KHOẢN DỊCH VỤ THÀNH CÔNG",
+          content
+        );
+      }
       const rs = await serviceProvider.updateStatus(
         service._id,
         req.body.status

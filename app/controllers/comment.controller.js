@@ -25,7 +25,11 @@ exports.findAllCommentOfServiceReal = async (req, res, next) => {
     const userService = new UserService(MongoDB.client);
 
     let documents = await commentService.findAllCommentOfService(service_id);
-
+    documents.sort((a, b) => {
+      const dateA = new Date(a.createAt);
+      const dateB = new Date(b.createAt);
+      return dateB - dateA;
+    });
     return res.send(documents);
   } catch (error) {
     return next(
